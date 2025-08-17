@@ -132,12 +132,21 @@ var SCENE = (function () {
 
           // Apply scroll movement with improved sensitivity
           var scrollSpeed = 4; // Increased sensitivity for faster scrolling
-          var newCameraY = camera.position.y + (delta * scrollSpeed);
+          var targetCameraY = camera.position.y + (delta * scrollSpeed);
           
-          // Constrain to section bounds
+          // Check if user is trying to scroll past the last section (thank you section)
           var maxY = parameters.sectionHeight;
           var minY = (-sections.length * parameters.sectionHeight) - parameters.sectionHeight;
-          newCameraY = Math.max(minY, Math.min(maxY, newCameraY));
+          
+          // Detect if user is trying to scroll down past the thank you section
+          if (targetCameraY < minY && delta < 0 && !isLocked) {
+            // User is trying to scroll past thank you section, trigger about me page
+            events.trigger('end');
+            return false;
+          }
+          
+          // Constrain to section bounds
+          var newCameraY = Math.max(minY, Math.min(maxY, targetCameraY));
           
           // Update camera position directly for immediate response
           camera.position.y = newCameraY;
@@ -178,9 +187,19 @@ var SCENE = (function () {
           var scrollAmount = parameters.sectionHeight * 0.3; // Smaller increments for smoother movement
           
           if (keyCode === 40) { // Down arrow
-            var newCameraY = camera.position.y - scrollAmount;
+            var targetCameraY = camera.position.y - scrollAmount;
             var minY = (-sections.length * parameters.sectionHeight) - parameters.sectionHeight;
-            newCameraY = Math.max(minY, newCameraY);
+            
+            // Check if user is trying to go past the thank you section with keyboard
+            if (targetCameraY < minY && !isLocked) {
+              // User is trying to navigate past thank you section, trigger about me page
+              setTimeout(function() {
+                events.trigger('end');
+              }, 100);
+              return false;
+            }
+            
+            var newCameraY = Math.max(minY, targetCameraY);
             
             TweenLite.to(camera.position, 0.5, { 
               y: newCameraY,
