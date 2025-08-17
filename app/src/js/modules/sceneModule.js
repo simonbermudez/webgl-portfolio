@@ -264,11 +264,8 @@ var SCENE = (function () {
 
         function onTouchMove(event) {
           if (MobileUtils.isMobile()) {
-            // Handle mouse tracking for horizontal camera movement
-            if (event.originalEvent.touches.length === 1) {
-              var touch = event.originalEvent.touches[0];
-              mouseX = (touch.clientX / window.innerWidth) * 2 - 1;
-            }
+            // Skip horizontal camera movement tracking on mobile
+            // Only handle vertical scrolling
             
             // Free-form scrolling on mobile
             var currentTouchY = event.originalEvent.touches[0].clientY;
@@ -466,8 +463,13 @@ var SCENE = (function () {
       camera.position.y += Math.cos(cameraShakeY) / 50;
       cameraShakeY += 0.02;
 
-      // mouse camera move
-      camera.position.x += ((mouseX * 5) - camera.position.x) * 0.03;
+      // mouse camera move - skip on mobile to keep camera centered
+      if (!MobileUtils.isMobile()) {
+        camera.position.x += ((mouseX * 5) - camera.position.x) * 0.03;
+      } else {
+        // Keep camera centered on mobile
+        camera.position.x += (0 - camera.position.x) * 0.03;
+      }
 
       renderer.render(scene, camera);
     }
