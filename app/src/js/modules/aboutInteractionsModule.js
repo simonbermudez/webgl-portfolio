@@ -48,7 +48,10 @@ var ABOUT_FX = (function () {
       var panel = document.querySelector('.tails.about');
       cursor = document.createElement('div');
       cursor.className = 'about__cursor';
-      panel.appendChild(cursor);
+      // Mount on <body>, not the panel: `.tails` has a transform (the slide) and
+      // is the scroll container, so a fixed child there scrolls away with the
+      // content. On <body> the fixed cursor stays locked to the viewport.
+      document.body.appendChild(cursor);
       panel.classList.add('has-cursor');
 
       gsap.set(cursor, { xPercent: -50, yPercent: -50, opacity: 0 });
