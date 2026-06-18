@@ -1,0 +1,61 @@
+name: Deploy to FTP
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install build toolchain
+        run: npm ci
+
+      - name: Install Bower
+        run: npm install -g bower
+
+      - name: Install front-end libraries
+        run: bower install --allow-root
+
+      - name: Configure production build
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.debug = false;
+            pkg.watch = false;
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
+
+      - name: Build
+        run: |
+          npx gulp build
+          npx gulp bundle
+
+      - name: Stage deployment artifacts
+        run: |
+          mkdir -p .deploy/app
+          cp *.html favicon.ico robots.txt sitemap.xml .deploy/
+          cp -r assets .deploy/assets
+          cp -r app/dist .deploy/app/dist
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@4.3.2
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./.deploy/
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          dangerous-clean-slate: false
