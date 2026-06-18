@@ -2,21 +2,28 @@
 
 'use strict';
 
-require('./polyfills/animFramePolyfill');
-require('./polyfills/bindPolyfill');
-require('./polyfills/indexOfPolyfill');
+import './polyfills/animFramePolyfill.js';
+import './polyfills/bindPolyfill.js';
+import './polyfills/indexOfPolyfill.js';
 
-var jQuery = require('jquery');
-var skrollr = require('skrollr');
-require('./libs/waypointLib');
+// Wire up jQuery/GSAP globals + the jquery.gsap shim before anything uses them.
+import './vendor/gsapSetup.js';
+
+// Styles (Vite bundles these into the 2D chunk's CSS)
+import 'normalize.css';
+import '../less/main2D.less';
+
+import jQuery from 'jquery';
+import skrollr from 'skrollr';
+import './libs/waypointLib.js';
   
-var HASH = require('./modules/hashModule');
+import HASH from './modules/hashModule.js';
 
-var ImagesLoader = require('./classes/LoaderClass');
+import ImagesLoader from './classes/LoaderClass.js';
 
-var Loader = require('./objects2D/LoaderObject2D');
-var Menu = require('./objects2D/menuObject2D');
-var Wireframe = require('./objects2D/WireframeObject2D');
+import Loader from './objects2D/LoaderObject2D.js';
+import Menu from './objects2D/menuObject2D.js';
+import Wireframe from './objects2D/WireframeObject2D.js';
 
 function mobile () {
   return navigator.userAgent.match(/Android/i)

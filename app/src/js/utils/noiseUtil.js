@@ -178,4 +178,4 @@ function noise(x, y, z) {
   return sum;
 }
 
-module.exports = noise;
+export default noise;

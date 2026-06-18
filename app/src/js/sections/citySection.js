@@ -1,10 +1,10 @@
 'use strict';
 
-var TweenLite = require('tweenlite');
+import { TweenLite } from 'gsap';
 
-var Section = require('../classes/SectionClass');
+import Section from '../classes/SectionClass.js';
 
-var City = require('../objects3D/CityObject3D');
+import City from '../objects3D/CityObject3D.js';
 
 var citySection = new Section('city');
 
@@ -53,4 +53,4 @@ citySection.onStop(function (way) {
 
 });
 
-module.exports = citySection;
+export default citySection;

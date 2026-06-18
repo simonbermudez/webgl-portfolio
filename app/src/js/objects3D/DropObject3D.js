@@ -1,10 +1,10 @@
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var loop = require('../utils/loopUtil');
+import loop from '../utils/loopUtil.js';
 
 /**
  * Animated water ripple
@@ -85,7 +85,7 @@ Drop.defaultOptions = {
  * @return {THREE.Mesh}
  */
 Drop.prototype.getPlane = function () {
-  var texture = THREE.ImageUtils.loadTexture('./app/public/img/texture-drop.png');
+  var texture = new THREE.TextureLoader().load('./app/public/img/texture-drop.png');
   
   var material = new THREE.MeshBasicMaterial({
     map: texture,
@@ -124,4 +124,4 @@ Drop.prototype.getTween = function (plane, index) {
     });
 };
 
-module.exports = Drop;
+export default Drop;

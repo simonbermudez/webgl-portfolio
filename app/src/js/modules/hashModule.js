@@ -1,6 +1,6 @@
 'use strict';
 
-var jQuery = require('jquery');
+import jQuery from 'jquery';
 
 /**
  * Extract the current hash
@@ -103,4 +103,4 @@ var HASH = HASH || (function () {
   };
 })();
 
-module.exports = HASH.getInstance();
+export default HASH.getInstance();

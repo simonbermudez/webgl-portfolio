@@ -1,8 +1,8 @@
 'use strict';
 
-var jQuery = require('jquery');
+import jQuery from 'jquery';
 
-var Events = require('../classes/EventsClass');
+import Events from '../classes/EventsClass.js';
 
 /**
  * Handle navigation between heads/tails
@@ -222,4 +222,4 @@ var APP = (function () {
   };
 })();
 
-module.exports = APP.getInstance();
+export default APP.getInstance();

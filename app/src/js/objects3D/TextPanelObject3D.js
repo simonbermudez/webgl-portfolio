@@ -1,8 +1,8 @@
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
   
 /**
  * Display a 2D text in 3D space
@@ -139,4 +139,4 @@ TextPanel.defaultOptions = {
   color: 'rgba(200, 200, 200, 1)'
 };
 
-module.exports = TextPanel;
+export default TextPanel;

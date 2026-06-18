@@ -1,7 +1,7 @@
 'use strict';
 
-var jQuery = require('jquery');
-var MobileUtils = require('../utils/mobileUtils');
+import jQuery from 'jquery';
+import MobileUtils from '../utils/mobileUtils.js';
 
 /**
  * Menu
@@ -104,4 +104,4 @@ function Menu () {
   };
 }
 
-module.exports = Menu;
+export default Menu;

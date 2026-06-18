@@ -1,18 +1,17 @@
 'use strict';
 
-var THREE = require('three');
+import * as THREE from 'three';
 
-var dilate = require('../utils/dilateUtil');
+import dilate from '../utils/dilateUtil.js';
+import loadLegacyModel from '../utils/legacyModelUtil.js';
 
-var outlineMaterial = require('../materials/outlineMaterial');
+import outlineMaterial from '../materials/outlineMaterial.js';
 
 function City () {
   this.el = new THREE.Object3D();
 
   this.groups = {};
   this.baseMaterial = new THREE.MeshLambertMaterial({ color: '#333333' });
-
-  this.loader = new THREE.JSONLoader();
 }
 
 City.prototype.addGroup = function (data) {
@@ -47,7 +46,7 @@ City.prototype.addGroup = function (data) {
 City.prototype.loadObj = function (groupName, url, offset, isSolid) {
   var _this = this;
 
-  this.loader.load(url, function (geometry) {
+  loadLegacyModel(url, function (geometry) {
     _this.processObj({
       geometry: geometry,
       group: groupName,
@@ -69,27 +68,34 @@ City.prototype.processObj = function (data) {
   dilate(outlineGeometry, data.offset);
 
   var localOutlineMaterial = outlineMaterial.clone();
-  localOutlineMaterial.uniforms = THREE.UniformsUtils.clone(outlineMaterial.uniforms);
-  localOutlineMaterial.attributes = THREE.UniformsUtils.clone(outlineMaterial.attributes);
 
   var outlineMesh = new THREE.Mesh(outlineGeometry, localOutlineMaterial);
 
   outlineGeometry.computeBoundingBox();
   var height = outlineGeometry.boundingBox.max.y - outlineGeometry.boundingBox.min.y;
 
-  for (var i = 0, j = outlineGeometry.vertices.length; i < j; i++) {
-    var color;
+  // Per-vertex rgba is now a `customColor` BufferAttribute on the geometry
+  // (bound by name to the shader's `attribute vec4 customColor`).
+  var position = outlineGeometry.attributes.position;
+  var customColor = new Float32Array(position.count * 4);
+
+  for (var i = 0, j = position.count; i < j; i++) {
+    var alpha;
 
     if (data.solid) {
-      color = new THREE.Vector4(0.7, 0.7, 0.7, 1.0);
+      alpha = 1.0;
     } else {
-      var vertex = outlineGeometry.vertices[i];
-      var percent = Math.floor(vertex.y * 100 / height) - 10;
-      color = new THREE.Vector4(0.7, 0.7, 0.7, percent / 100);
+      var percent = Math.floor(position.getY(i) * 100 / height) - 10;
+      alpha = percent / 100;
     }
 
-    localOutlineMaterial.attributes.customColor.value[i] = color;
+    customColor[i * 4] = 0.7;
+    customColor[i * 4 + 1] = 0.7;
+    customColor[i * 4 + 2] = 0.7;
+    customColor[i * 4 + 3] = alpha;
   }
+
+  outlineGeometry.setAttribute('customColor', new THREE.BufferAttribute(customColor, 4));
 
   this.groups[groupName].add(outlineMesh);
 };
@@ -98,4 +104,4 @@ City.prototype.showGroup = function (name) {
   this.el.add(this.groups[name]);
 };
 
-module.exports = City;
+export default City;

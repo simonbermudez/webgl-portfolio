@@ -1,6 +1,6 @@
 'use strict';
 
-var jQuery = require('jquery');
+import jQuery from 'jquery';
 
 /**
  * Slider
@@ -178,4 +178,4 @@ Slider.prototype.stop = function () {
   window.clearInterval(this.interval);
 };
 
-module.exports = Slider;
+export default Slider;

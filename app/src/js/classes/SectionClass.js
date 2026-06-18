@@ -1,6 +1,6 @@
 'use strict';
 
-var THREE = require('three');
+import * as THREE from 'three';
 
 /**
  * Section class
@@ -123,4 +123,4 @@ Section.prototype.onStop = function (callback) {
   this._stop = callback;
 };
 
-module.exports = Section;
+export default Section;

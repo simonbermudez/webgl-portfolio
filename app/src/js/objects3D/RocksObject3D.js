@@ -1,9 +1,10 @@
 'use strict';
 
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var yoyo = require('../utils/yoyoUtil');
+import yoyo from '../utils/yoyoUtil.js';
+import loadLegacyModel from '../utils/legacyModelUtil.js';
 
 /**
  * 3D Rocks
@@ -25,14 +26,13 @@ function Rocks () {
   var rocksMaterial = new THREE.MeshLambertMaterial({
     color: '#0a0a0a',
     side: THREE.DoubleSide,
-    shading: THREE.FlatShading
+    flatShading: true
   });
 
   var fromColor = new THREE.Color('#0a0a0a');
   var toColor = new THREE.Color('#ffffff');
 
-  var loader = new THREE.JSONLoader();
-  loader.load('./app/public/3D/rocks.js', function (geometry) {
+  loadLegacyModel('./app/public/3D/rocks.js', function (geometry) {
     var rocks = new THREE.Mesh(geometry, rocksMaterial);
     rocks.position.set(-70, 0, -30);
     group.add(rocks);
@@ -117,4 +117,4 @@ Rocks.prototype.getLight = function () {
   return light;
 };
 
-module.exports = Rocks;
+export default Rocks;

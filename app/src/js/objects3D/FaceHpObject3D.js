@@ -1,12 +1,13 @@
 'use strict';
 
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var yoyo = require('../utils/yoyoUtil');
+import yoyo from '../utils/yoyoUtil.js';
+import loadLegacyModel from '../utils/legacyModelUtil.js';
 
-var matCap = require('../materials/matCapMaterial');
-matCap.uniforms.map.value = THREE.ImageUtils.loadTexture('./app/public/img/matCap-shiny.jpg');
+import matCap from '../materials/matCapMaterial.js';
+matCap.uniforms.map.value = new THREE.TextureLoader().load('./app/public/img/matCap-shiny.jpg');
 
 /**
  * 3D face
@@ -18,8 +19,7 @@ matCap.uniforms.map.value = THREE.ImageUtils.loadTexture('./app/public/img/matCa
 function Face () {
   var group = new THREE.Object3D();
 
-  var loader = new THREE.JSONLoader();
-  loader.load('./app/public/3D/face-hp.js', function (geometry) {
+  loadLegacyModel('./app/public/3D/face-hp.js', function (geometry) {
     var mesh = new THREE.Mesh(geometry, matCap);
     mesh.scale.x = 1.5;
     mesh.scale.y = 1.5;
@@ -63,4 +63,4 @@ function Face () {
   this.out = this.start;
 }
 
-module.exports = Face;
+export default Face;

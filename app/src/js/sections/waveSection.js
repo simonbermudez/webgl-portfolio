@@ -1,10 +1,10 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
-var MobileUtils = require('../utils/mobileUtils');
+import Section from '../classes/SectionClass.js';
+import MobileUtils from '../utils/mobileUtils.js';
 
-var TextPanel = require('../objects3D/TextPanelObject3D');
-var Wave = require('../objects3D/WaveObject3D');
+import TextPanel from '../objects3D/TextPanelObject3D.js';
+import Wave from '../objects3D/WaveObject3D.js';
 
 var waveSection = new Section('wave');
 
@@ -52,4 +52,4 @@ waveSection.onStop(function () {
   wave.el.visible = false;
 });
 
-module.exports = waveSection;
+export default waveSection;

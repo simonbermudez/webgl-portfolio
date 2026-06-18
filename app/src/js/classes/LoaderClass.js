@@ -62,4 +62,4 @@ ImagesLoader.prototype.onComplete = function (complete) {
   this.complete = complete;
 };
 
-module.exports = ImagesLoader;
+export default ImagesLoader;

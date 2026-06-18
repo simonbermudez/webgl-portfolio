@@ -1,12 +1,12 @@
 'use strict';
 
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var SOUNDS = require('../modules/soundsModule');
-var random = require('../utils/randomUtil');
-var yoyo = require('../utils/yoyoUtil');
-var glitchMaterial = require('../materials/glitchMaterial');
+import SOUNDS from '../modules/soundsModule.js';
+import random from '../utils/randomUtil.js';
+import yoyo from '../utils/yoyoUtil.js';
+import glitchMaterial from '../materials/glitchMaterial.js';
 
 /**
  * Animated ball
@@ -16,8 +16,8 @@ var glitchMaterial = require('../materials/glitchMaterial');
  * @requires THREE, TweenLite, SOUNDS, random, yoyo, glitchMaterial
  */
 function Ball () {
-  var texture = THREE.ImageUtils.loadTexture('./app/public/img/texture-ball.png');
-  var textureAlpha = THREE.ImageUtils.loadTexture('./app/public/img/texture-ballAlpha.png');
+  var texture = new THREE.TextureLoader().load('./app/public/img/texture-ball.png');
+  var textureAlpha = new THREE.TextureLoader().load('./app/public/img/texture-ballAlpha.png');
   texture.wrapS = textureAlpha.wrapS = THREE.RepeatWrapping;
   texture.wrapT = textureAlpha.wrapT = THREE.RepeatWrapping;
   texture.repeat.x = textureAlpha.repeat.x = 0;
@@ -149,4 +149,4 @@ function Ball () {
   };
 }
 
-module.exports = Ball;
+export default Ball;

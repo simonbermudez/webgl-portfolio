@@ -1,12 +1,12 @@
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var random = require('../utils/randomUtil');
-var noise = require('../utils/noiseUtil');
-var map = require('../utils/mapUtil');
+import random from '../utils/randomUtil.js';
+import noise from '../utils/noiseUtil.js';
+import map from '../utils/mapUtil.js';
 
 /**
  * 3D Flow field
@@ -42,7 +42,7 @@ function FlowField (points, options) {
   }
 
   var triangleGeometry = new THREE.TetrahedronGeometry(3);
-  var triangleMaterial = new THREE.MeshLambertMaterial({ shading: THREE.FlatShading });
+  var triangleMaterial = new THREE.MeshLambertMaterial({ flatShading: true });
   var triangleMesh = new THREE.Mesh(triangleGeometry, triangleMaterial);
 
   var follow = this.getFollow(triangleMesh, subs);
@@ -98,7 +98,7 @@ FlowField.defaultOptions = {
  * @return {Object}
  */
 FlowField.prototype.getCurves = function (points) {
-  var main = new THREE.SplineCurve3(points);
+  var main = new THREE.CatmullRomCurve3(points);
 
   var subsPoints = main.getPoints(this.parameters.subsPrecision);
 
@@ -124,7 +124,7 @@ FlowField.prototype.getCurves = function (points) {
       newPoints.push(point);
     }
 
-    subs.push(new THREE.SplineCurve3(newPoints));
+    subs.push(new THREE.CatmullRomCurve3(newPoints));
   }
 
   return {
@@ -137,7 +137,7 @@ FlowField.prototype.getCurves = function (points) {
  * Get lines
  *
  * @method getLines
- * @param {THREE.SplineCurve3} [main] Main curve
+ * @param {THREE.CatmullRomCurve3} [main] Main curve
  * @param {Array} [subs] Sub curves
  * @return {Array}
  */
@@ -146,9 +146,8 @@ FlowField.prototype.getLines = function (main, subs) {
 
   var mainMaterial = new THREE.LineBasicMaterial({ color: this.parameters.mainColor });
 
-  var mainGeometry = new THREE.Geometry();
   var mainPoints = main.getPoints(this.parameters.renderResolution);
-  mainGeometry.vertices = mainPoints;
+  var mainGeometry = new THREE.BufferGeometry().setFromPoints(mainPoints);
 
   var mainLine = new THREE.Line(mainGeometry, mainMaterial);
   mainLine.visible = false;
@@ -157,9 +156,8 @@ FlowField.prototype.getLines = function (main, subs) {
   var subMaterial = new THREE.LineBasicMaterial({ color: this.parameters.subsColor });
 
   for (var i = 0, j = subs.length; i < j; i++) {
-    var subGeometry = new THREE.Geometry();
     var subPoints = subs[i].getPoints(this.parameters.renderResolution);
-    subGeometry.vertices = subPoints;
+    var subGeometry = new THREE.BufferGeometry().setFromPoints(subPoints);
 
     var subLine = new THREE.Line(subGeometry, subMaterial);
     subLine.visible = false;
@@ -236,4 +234,4 @@ FlowField.prototype.getFollow = function (mesh, curves) {
   };
 };
 
-module.exports = FlowField;
+export default FlowField;

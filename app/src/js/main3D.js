@@ -1,46 +1,53 @@
 'use strict';
 
-require('./polyfills/animFramePolyfill');
-require('./polyfills/bindPolyfill');
-require('./polyfills/indexOfPolyfill');
+// Disable three.js r152+ colour management before any THREE colour/material is
+// created, so the scene keeps its original (r68) appearance.
+import './vendor/threeSetup.js';
 
-var jQuery = require('jquery');
-var TweenLite = require('tweenlite');
-// GSAP 3 sets tween defaults via gsap.defaults() instead of TweenLite.defaultEase.
-if (window.gsap) {
-  window.gsap.defaults({ ease: 'quad.inOut' });
-}
+import './polyfills/animFramePolyfill.js';
+import './polyfills/bindPolyfill.js';
+import './polyfills/indexOfPolyfill.js';
 
-require('./libs/waypointLib');
+// Wire up jQuery/GSAP globals + the jquery.gsap shim before anything uses them.
+import './vendor/gsapSetup.js';
+
+// Styles (Vite bundles these into the 3D chunk's CSS)
+import 'normalize.css';
+import '../less/main3D.less';
+
+import jQuery from 'jquery';
+import { TweenLite } from 'gsap';
+
+import './libs/waypointLib.js';
   
-var APP = require('./modules/appModule');
-var SCENE = require('./modules/sceneModule');
-var SOUNDS = require('./modules/soundsModule');
-var HASH = require('./modules/hashModule');
+import APP from './modules/appModule.js';
+import SCENE from './modules/sceneModule.js';
+import SOUNDS from './modules/soundsModule.js';
+import HASH from './modules/hashModule.js';
 
-var ImagesLoader = require('./classes/LoaderClass');
+import ImagesLoader from './classes/LoaderClass.js';
 
-var MobileUtils = require('./utils/mobileUtils');
+import MobileUtils from './utils/mobileUtils.js';
 
-var Loader = require('./objects2D/LoaderObject2D');
-var Menu = require('./objects2D/menuObject2D');
-var Help = require('./objects2D/HelpObject2D');
-var Wireframe = require('./objects2D/WireframeObject2D');
+import Loader from './objects2D/LoaderObject2D.js';
+import Menu from './objects2D/menuObject2D.js';
+import Help from './objects2D/HelpObject2D.js';
+import Wireframe from './objects2D/WireframeObject2D.js';
 
-var helloSection = require('./sections/helloSection');
-var beamsSection = require('./sections/beamsSection');
-var dropSection = require('./sections/dropSection');
-var ballSection = require('./sections/ballSection');
-var flowSection = require('./sections/flowSection');
-var neonsSection = require('./sections/neonsSection');
-var heightSection = require('./sections/heightSection');
-var waveSection = require('./sections/waveSection');
-var faceSection = require('./sections/faceSection');
-var rocksSection = require('./sections/rocksSection');
-var galaxySection = require('./sections/galaxySection');
-var gravitySection = require('./sections/gravitySection');
-var citySection = require('./sections/citySection');
-var endSection = require('./sections/endSection');
+import helloSection from './sections/helloSection.js';
+import beamsSection from './sections/beamsSection.js';
+import dropSection from './sections/dropSection.js';
+import ballSection from './sections/ballSection.js';
+import flowSection from './sections/flowSection.js';
+import neonsSection from './sections/neonsSection.js';
+import heightSection from './sections/heightSection.js';
+import waveSection from './sections/waveSection.js';
+import faceSection from './sections/faceSection.js';
+import rocksSection from './sections/rocksSection.js';
+import galaxySection from './sections/galaxySection.js';
+import gravitySection from './sections/gravitySection.js';
+import citySection from './sections/citySection.js';
+import endSection from './sections/endSection.js';
 
 jQuery(function () {
   HASH.replacePlaceholders();

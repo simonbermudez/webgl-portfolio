@@ -1,11 +1,11 @@
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var map = require('../utils/mapUtil');
-var random = require('../utils/randomUtil');
+import map from '../utils/mapUtil.js';
+import random from '../utils/randomUtil.js';
 
 /**
  * Simple 3D grid that can receive forces
@@ -51,7 +51,7 @@ Grid.prototype.init = function () {
   var width = (this.parameters.stepsX - 1) * this.parameters.stepSize;
   var height = (this.parameters.stepsY - 1) * this.parameters.stepSize;
 
-  var points = new THREE.Geometry();
+  var pointVertices = [];
 
   for (var x = 0; x < this.parameters.stepsX; x++) {
     for (var y = 0; y < this.parameters.stepsY; y++) {
@@ -60,9 +60,11 @@ Grid.prototype.init = function () {
       var zPos = 0;
 
       var vertex = new THREE.Vector3(xPos, yPos, zPos);
-      points.vertices.push(vertex);
+      pointVertices.push(vertex);
     }
   }
+
+  var points = new THREE.BufferGeometry().setFromPoints(pointVertices);
 
   // init color cache
   var fromColor = new THREE.Color(this.parameters.linesFromColor);
@@ -85,10 +87,10 @@ Grid.prototype.render = function () {
   var group = new THREE.Object3D();
 
   // points
-  var pointCloudMaterial = new THREE.PointCloudMaterial({
+  var pointCloudMaterial = new THREE.PointsMaterial({
     size: 0.3
   });
-  var pointCloud = new THREE.PointCloud(this.points, pointCloudMaterial);
+  var pointCloud = new THREE.Points(this.points, pointCloudMaterial);
 
   if (this.parameters.points) {
     group.add(pointCloud);
@@ -99,35 +101,65 @@ Grid.prototype.render = function () {
 
   var lineMaterial = new THREE.LineBasicMaterial({
     color: this.parameters.linesColor,
-    vertexColors: THREE.VertexColors
+    vertexColors: true
   });
+
+  var pointsPositions = this.points.attributes.position.array;
 
   // horizontal
   for (var i = 0; i < this.parameters.stepsY; i++) {
-    var hLineGeometry = new THREE.Geometry();
+    var hLineVertices = [];
+    var hLineSourceIndices = [];
 
     for (var j = 0; j < this.parameters.stepsX; j++) {
-      hLineGeometry.vertices.push(
-        this.points.vertices[i + (j * this.parameters.stepsY)]
+      var hIndex = i + (j * this.parameters.stepsY);
+      hLineSourceIndices.push(hIndex);
+      hLineVertices.push(
+        new THREE.Vector3(
+          pointsPositions[hIndex * 3 + 0],
+          pointsPositions[hIndex * 3 + 1],
+          pointsPositions[hIndex * 3 + 2]
+        )
       );
     }
 
+    var hLineGeometry = new THREE.BufferGeometry().setFromPoints(hLineVertices);
+    hLineGeometry.setAttribute(
+      'color',
+      new THREE.BufferAttribute(new Float32Array(hLineVertices.length * 3), 3)
+    );
+
     var hLine = new THREE.Line(hLineGeometry, lineMaterial);
+    hLine.userData.sourceIndices = hLineSourceIndices;
 
     lines.add(hLine);
   }
 
   // vertical
   for (var k = 0; k < this.parameters.stepsX; k++) {
-    var vLineGeometry = new THREE.Geometry();
+    var vLineVertices = [];
+    var vLineSourceIndices = [];
 
     for (var l = 0; l < this.parameters.stepsY; l++) {
-      vLineGeometry.vertices.push(
-        this.points.vertices[(k * this.parameters.stepsY) + l]
-      );        
+      var vIndex = (k * this.parameters.stepsY) + l;
+      vLineSourceIndices.push(vIndex);
+      vLineVertices.push(
+        new THREE.Vector3(
+          pointsPositions[vIndex * 3 + 0],
+          pointsPositions[vIndex * 3 + 1],
+          pointsPositions[vIndex * 3 + 2]
+        )
+      );
     }
 
+    var vLineGeometry = new THREE.BufferGeometry().setFromPoints(vLineVertices);
+    vLineGeometry.setAttribute(
+      'color',
+      new THREE.BufferAttribute(new Float32Array(vLineVertices.length * 3), 3)
+    );
+
     var vLine = new THREE.Line(vLineGeometry, lineMaterial);
+    vLine.userData.sourceIndices = vLineSourceIndices;
 
     lines.add(vLine);
   }
@@ -148,29 +180,46 @@ Grid.prototype.render = function () {
  * @param {Number} [strength] Strength of the force
  */
 Grid.prototype.applyForce = function (center, strength) {
-  // update points
-  for (var i = 0, j = this.points.geometry.vertices.length; i < j; i++) {
-    var dist = this.points.geometry.vertices[i].distanceTo(center);
+  var pointsPositions = this.points.geometry.attributes.position.array;
+  var pointsCount = this.points.geometry.attributes.position.count;
 
-    this.points.geometry.vertices[i].z -= (strength * 10) / Math.sqrt(dist * 2 ) - (strength * 2);
+  // update points
+  for (var i = 0; i < pointsCount; i++) {
+    var px = pointsPositions[i * 3 + 0];
+    var py = pointsPositions[i * 3 + 1];
+    var pz = pointsPositions[i * 3 + 2];
+
+    var dx = px - center.x;
+    var dy = py - center.y;
+    var dz = pz - center.z;
+    var dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+    pointsPositions[i * 3 + 2] = pz - ((strength * 10) / Math.sqrt(dist * 2) - (strength * 2));
   }
-  this.points.geometry.verticesNeedUpdate = true;
+  this.points.geometry.attributes.position.needsUpdate = true;
 
   // update lines
   for (var k = 0, l = this.lines.children.length; k < l; k++) {
-    var geometry = this.lines.children[k].geometry;
+    var line = this.lines.children[k];
+    var geometry = line.geometry;
+    var sourceIndices = line.userData.sourceIndices;
+    var linePositions = geometry.attributes.position.array;
+    var colorAttr = geometry.attributes.color;
 
-    // update vertices colors
-    for (var m = 0, n = geometry.vertices.length; m < n; m++) {
-      var vertex = geometry.vertices[m];
-      var percent = map(vertex.z, [0, 5], [0, 1]);
+    // sync vertices z from points and update vertices colors
+    for (var m = 0, n = sourceIndices.length; m < n; m++) {
+      var z = pointsPositions[sourceIndices[m] * 3 + 2];
+      linePositions[m * 3 + 2] = z;
+
+      var percent = map(z, [0, 5], [0, 1]);
       percent = Math.round(percent * 10) / 10;
 
-      geometry.colors[m] = this.colorsCache[percent];
+      var color = this.colorsCache[percent];
+      colorAttr.setXYZ(m, color.r, color.g, color.b);
     }
 
-    geometry.verticesNeedUpdate = true;
-    geometry.colorsNeedUpdate = true;
+    geometry.attributes.position.needsUpdate = true;
+    colorAttr.needsUpdate = true;
   }
 };
 
@@ -180,9 +229,13 @@ Grid.prototype.applyForce = function (center, strength) {
  * @method resetFroce
  */
 Grid.prototype.resetForce = function () {
-  for (var i = 0, j = this.points.geometry.vertices.length; i < j; i++) {
-    this.points.geometry.vertices[i].z = 0;
+  var pointsPositions = this.points.geometry.attributes.position.array;
+  var pointsCount = this.points.geometry.attributes.position.count;
+
+  for (var i = 0; i < pointsCount; i++) {
+    pointsPositions[i * 3 + 2] = 0;
   }
+  this.points.geometry.attributes.position.needsUpdate = true;
 };
 
 /**
@@ -330,4 +383,4 @@ function GravityGrid (options) {
   };
 }
 
-module.exports = GravityGrid;
+export default GravityGrid;

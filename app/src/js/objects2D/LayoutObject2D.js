@@ -131,4 +131,4 @@ Layout.prototype.stop = function () {
   window.clearInterval(this.interval);
 };
 
-module.exports = Layout;
+export default Layout;

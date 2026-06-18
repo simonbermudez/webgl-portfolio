@@ -52,4 +52,4 @@ Events.prototype.trigger = function (name, data) {
   }
 };
 
-module.exports = Events;
+export default Events;

@@ -1,9 +1,9 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
+import Section from '../classes/SectionClass.js';
 
-var Smoke = require('../objects3D/SmokeObject3D');
-var Neon = require('../objects3D/NeonObject3D');
+import Smoke from '../objects3D/SmokeObject3D.js';
+import Neon from '../objects3D/NeonObject3D.js';
 
 var neonsSection = new Section('neons');
 
@@ -110,4 +110,4 @@ neonsSection.smokeStop = function () {
   smoke.el.visible = false;
 };
 
-module.exports = neonsSection;
+export default neonsSection;

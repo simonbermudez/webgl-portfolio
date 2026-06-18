@@ -1,10 +1,10 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
-var MobileUtils = require('../utils/mobileUtils');
+import Section from '../classes/SectionClass.js';
+import MobileUtils from '../utils/mobileUtils.js';
 
-var TextPanel = require('../objects3D/TextPanelObject3D');
-var Rocks = require('../objects3D/RocksObject3D');
+import TextPanel from '../objects3D/TextPanelObject3D.js';
+import Rocks from '../objects3D/RocksObject3D.js';
 
 var rocksSection = new Section('rocks');
 
@@ -56,4 +56,4 @@ rocksSection.hide = function () {
   rocks.el.visible = false;
 };
 
-module.exports = rocksSection;
+export default rocksSection;

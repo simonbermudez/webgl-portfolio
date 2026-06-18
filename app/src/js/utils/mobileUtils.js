@@ -69,4 +69,4 @@ var MobileUtils = (function () {
   };
 })();
 
-module.exports = MobileUtils;
+export default MobileUtils;

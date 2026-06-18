@@ -102,10 +102,16 @@ tween `reversed` at progress 0 (hidden), so the HELLO title only showed up after
 the first scroll. The handler now treats `from` as empty when it equals `to`, so
 the initial event only runs the entrance.
 
-### three.js — kept at r68 (deliberately)
+### three.js — r68 → r184 (migrated)
+
+> **Update:** three.js has since been migrated from r68 to **r184**. This was a
+> re-authoring effort (not a version bump) and is described in its own PR. The
+> rest of this section documents what that migration entailed; it is no longer
+> "out of scope". The build also moved from gulp/browserify/bower to **Vite +
+> npm** as part of that work — see [`README.md`](README.md).
 
 Bumping three.js to the current release is **not a version bump, it is a
-re-authoring project**, so it was left at r68. What a migration would require:
+re-authoring project**. What the migration required:
 
 - **3D models** (`app/public/3D/*.js`) are in three.js' legacy JSON model format
   (`formatVersion 3.1`, produced by the old OBJ converter) and load via

@@ -1,6 +1,6 @@
 'use strict';
 
-var THREE = require('three');
+import * as THREE from 'three';
 
 var glitch = new THREE.ShaderMaterial({
   uniforms: {
@@ -47,4 +47,4 @@ var glitch = new THREE.ShaderMaterial({
   ].join('\n')
 });
 
-module.exports = glitch;
+export default glitch;

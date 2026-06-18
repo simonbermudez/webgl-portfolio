@@ -1,8 +1,8 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
+import Section from '../classes/SectionClass.js';
 
-var GravityGrid = require('../objects3D/GravityGridObject3D');
+import GravityGrid from '../objects3D/GravityGridObject3D.js';
 
 var gravitySection = new Section('gravity');
 
@@ -39,4 +39,4 @@ gravitySection.hide = function () {
   grid.el.visible = false;
 };
 
-module.exports = gravitySection;
+export default gravitySection;

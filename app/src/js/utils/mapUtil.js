@@ -14,4 +14,4 @@ function map (value, oldRange, newRange) {
   return Math.min(Math.max(newValue, newRange[0]) , newRange[1]);
 }
 
-module.exports = map;
+export default map;

@@ -21,4 +21,4 @@ function random (low, high, round) {
   return randomValue;
 }
 
-module.exports = random;
+export default random;

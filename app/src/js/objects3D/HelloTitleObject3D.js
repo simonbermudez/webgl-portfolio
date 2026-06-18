@@ -1,10 +1,10 @@
 'use strict';
 
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var SPRITE3D = require('../libs/sprite3DLib');
-var HASH = require('../modules/hashModule');
+import SPRITE3D from '../libs/sprite3DLib.js';
+import HASH from '../modules/hashModule.js';
 
 /**
  * Hello title
@@ -33,7 +33,7 @@ function Title () {
     path = sprites.none;
   }
 
-  var texture = new THREE.ImageUtils.loadTexture(path);
+  var texture = new THREE.TextureLoader().load(path);
   texture.flipY = true;
 
   var sprite = new SPRITE3D.Sprite(texture, {
@@ -81,4 +81,4 @@ function Title () {
   };
 }
 
-module.exports = Title;
+export default Title;

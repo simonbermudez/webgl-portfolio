@@ -1,10 +1,10 @@
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
+import jQuery from 'jquery';
+import * as THREE from 'three';
 
-var SPRITE3D = require('../libs/sprite3DLib');
-var random = require('../utils/randomUtil');
+import SPRITE3D from '../libs/sprite3DLib.js';
+import random from '../utils/randomUtil.js';
 
 /**
  * Animated smoke
@@ -21,7 +21,7 @@ var random = require('../utils/randomUtil');
 function Smoke (options) {
   var parameters = jQuery.extend(Smoke.defaultOptions, options);
 
-  var texture = new THREE.ImageUtils.loadTexture('./app/public/img/sprite-smoke.png');
+  var texture = new THREE.TextureLoader().load('./app/public/img/sprite-smoke.png');
   texture.flipY = false;
 
   this.sprite = new SPRITE3D.Sprite(texture, {
@@ -96,4 +96,4 @@ Smoke.defaultOptions = {
   data: []
 };
 
-module.exports = Smoke;
+export default Smoke;

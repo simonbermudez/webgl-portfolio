@@ -33,4 +33,4 @@ function debounce (callback, delay, immediate) {
   };
 }
 
-module.exports = debounce; 
+export default debounce; 

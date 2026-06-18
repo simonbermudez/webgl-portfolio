@@ -1,7 +1,7 @@
 'use strict';
   
-var jQuery = require('jquery');
-var THREE = require('three');
+import jQuery from 'jquery';
+import * as THREE from 'three';
 
 /**
  * Sprite animation on a mesh using texture's offset
@@ -171,4 +171,4 @@ SPRITE3D.Sprite.prototype.update = function (delta) {
   return true;
 };
 
-module.exports = SPRITE3D;
+export default SPRITE3D;

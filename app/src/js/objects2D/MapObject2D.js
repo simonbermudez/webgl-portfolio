@@ -1,6 +1,6 @@
 'use strict';
 
-var jQuery = require('jquery');
+import jQuery from 'jquery';
 
 /**
  * Navigation Map
@@ -88,4 +88,4 @@ Map.prototype.in = function () {
   });
 };
 
-module.exports = Map;
+export default Map;

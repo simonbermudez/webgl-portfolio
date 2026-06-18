@@ -1,13 +1,13 @@
 'use strict';
 
-var jQuery = require('jquery');
-var MobileUtils = require('../utils/mobileUtils');
+import jQuery from 'jquery';
+import MobileUtils from '../utils/mobileUtils.js';
 
-var Slider = require('../libs/sliderLib');
+import Slider from '../libs/sliderLib.js';
 
-var Layout = require('../objects2D/LayoutObject2D');
-var Mouse = require('../objects2D/MouseObject2D');
-var Keys = require('../objects2D/KeysObject2D');
+import Layout from '../objects2D/LayoutObject2D.js';
+import Mouse from '../objects2D/MouseObject2D.js';
+import Keys from '../objects2D/KeysObject2D.js';
 
 /**
  * Help overlay
@@ -79,4 +79,4 @@ Help.prototype.out = function () {
   this.$el.find('.help__quit').off('click touchend');
 };
 
-module.exports = Help;
+export default Help;

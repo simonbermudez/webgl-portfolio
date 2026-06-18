@@ -2,7 +2,7 @@
 
 'use strict';
 
-var jQuery = require('jquery');
+import jQuery from 'jquery';
 
 /**
  * Animated wireframe
@@ -154,4 +154,4 @@ Wireframe.prototype.stop = function () {
   this.interval = null;
 };
 
-module.exports = Wireframe;
+export default Wireframe;

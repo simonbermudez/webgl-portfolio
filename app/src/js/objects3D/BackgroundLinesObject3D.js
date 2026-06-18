@@ -1,9 +1,9 @@
 'use strict';
   
-var jQuery = require('jquery');
-var THREE = require('three');
+import jQuery from 'jquery';
+import * as THREE from 'three';
 
-var random = require('../utils/randomUtil');
+import random from '../utils/randomUtil.js';
 
 /**
  * Background floating lines
@@ -50,13 +50,17 @@ BackgroundLines.defaultOptions = {
 BackgroundLines.prototype.getLine = function () {
   var material = new THREE.LineBasicMaterial();
 
-  var geometry = new THREE.Geometry();
-  geometry.vertices.push(new THREE.Vector3(0, 0.2, 0));
-  geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+  var positions = new Float32Array(2 * 3);
+  positions[0] = 0; positions[1] = 0.2; positions[2] = 0; // vertex 0: (0, 0.2, 0)
+  positions[3] = 0; positions[4] = 0;   positions[5] = 0; // vertex 1: (0, 0, 0)
+
+  var geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
   var line = new THREE.Line(geometry, material);
+  line.userData.positions = positions;
 
-  return line;  
+  return line;
 };
 
 /**
@@ -66,8 +70,8 @@ BackgroundLines.prototype.getLine = function () {
  * @param {Number} [speed]
  */
 BackgroundLines.prototype.updateY = function (speed) {
-  this.line.geometry.vertices[0].y = speed + 0.2;
-  this.line.geometry.verticesNeedUpdate = true;
+  this.line.userData.positions[1] = speed + 0.2; // vertex 0 y = index 0*3 + 1
+  this.line.geometry.attributes.position.needsUpdate = true;
   this.line.geometry.computeBoundingSphere();
 };
 
@@ -78,9 +82,9 @@ BackgroundLines.prototype.updateY = function (speed) {
  * @param {Number} [speed]
  */
 BackgroundLines.prototype.updateZ = function (speed) {
-  this.line.geometry.vertices[0].z = speed;
-  this.line.geometry.verticesNeedUpdate = true;
+  this.line.userData.positions[2] = speed; // vertex 0 z = index 0*3 + 2
+  this.line.geometry.attributes.position.needsUpdate = true;
   this.line.geometry.computeBoundingSphere();
 };
 
-module.exports = BackgroundLines;
+export default BackgroundLines;

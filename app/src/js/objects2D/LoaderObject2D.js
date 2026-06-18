@@ -1,6 +1,6 @@
 'use strict';
 
-var jQuery = require('jquery');
+import jQuery from 'jquery';
 
 /**
  * Preloader
@@ -39,4 +39,4 @@ Loader.prototype.out = function () {
  */
 Loader.prototype.update = function () {};
 
-module.exports = Loader;
+export default Loader;

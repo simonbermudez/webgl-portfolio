@@ -1,12 +1,12 @@
 'use strict';
 
-var THREE = require('three');
+import * as THREE from 'three';
 
-var Section = require('../classes/SectionClass');
-var MobileUtils = require('../utils/mobileUtils');
+import Section from '../classes/SectionClass.js';
+import MobileUtils from '../utils/mobileUtils.js';
 
-var FlowField = require('../objects3D/FlowFieldObject3D');
-var TextPanel = require('../objects3D/TextPanelObject3D');
+import FlowField from '../objects3D/FlowFieldObject3D.js';
+import TextPanel from '../objects3D/TextPanelObject3D.js';
 
 var flowSection = new Section('flow');
 
@@ -73,4 +73,4 @@ flowSection.onStop(function () {
   field.el.visible = false;
 });
 
-module.exports = flowSection;
+export default flowSection;

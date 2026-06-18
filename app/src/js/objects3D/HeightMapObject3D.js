@@ -3,14 +3,14 @@
 
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var Events = require('../classes/EventsClass');
+import Events from '../classes/EventsClass.js';
 
-var random = require('../utils/randomUtil');
-var map = require('../utils/mapUtil');
+import random from '../utils/randomUtil.js';
+import map from '../utils/mapUtil.js';
 
 /**
  * Animated height map
@@ -48,6 +48,15 @@ function HeightMap (options) {
   var group = new THREE.Object3D();
 
   this.geometry = new THREE.PlaneGeometry(50, 50, this.parameters.divisionsX, this.parameters.divisionsY);
+
+  // Per-vertex colour attribute for the plane/points. Modern BufferGeometry
+  // stores colours per vertex (not per face-vertex like the old Face3); since
+  // the colour is derived purely from each vertex's height (z), the collapse is
+  // exact.
+  this.geometry.setAttribute(
+    'color',
+    new THREE.BufferAttribute(new Float32Array(this.geometry.attributes.position.count * 3), 3)
+  );
 
   if (this.parameters.plane) {
     this.plane = this.getPlane();
@@ -108,8 +117,8 @@ HeightMap.defaultOptions = {
  */
 HeightMap.prototype.getPlane = function () {
   var material = new THREE.MeshLambertMaterial({
-    shading: THREE.FlatShading,
-    vertexColors: THREE.VertexColors
+    flatShading: true,
+    vertexColors: true
   });
 
   var plane = new THREE.Mesh(this.geometry, material);
@@ -122,11 +131,11 @@ HeightMap.prototype.getPlane = function () {
  *
  * @method getPoints
  * @param {THREE.Geometry} geometry
- * @return {THREE.PointCloud}
+ * @return {THREE.Points}
  */
 HeightMap.prototype.getPoints = function () {
-  var material = new THREE.PointCloudMaterial({ size: 0.3 });
-  var points = new THREE.PointCloud(this.geometry, material);
+  var material = new THREE.PointsMaterial({ size: 0.3 });
+  var points = new THREE.Points(this.geometry, material);
 
   return points;
 };
@@ -140,44 +149,78 @@ HeightMap.prototype.getPoints = function () {
  */
 HeightMap.prototype.getLines = function () {
   var material = new THREE.LineBasicMaterial({
-    vertexColors: THREE.VertexColors
+    vertexColors: true
   });
 
   var lines = new THREE.Object3D();
 
+  var divX = this.parameters.divisionsX;
+  var divY = this.parameters.divisionsY;
+  var pos = this.geometry.attributes.position;
+
+  // grid vertex index (matches PlaneGeometry's row-major ordering)
+  function gridIndex (x, y) {
+    return (y * (divX + 1)) + x;
+  }
+
+  // Each line is its own BufferGeometry; it mirrors a row/column of the shared
+  // plane grid. We keep, per line, the plane vertex indices it spans plus its
+  // position/colour buffers, so applyMap/setColors can copy height & colour
+  // from the plane grid each frame (the r68 code shared the actual Vector3s).
+  this.lineData = [];
+
+  var buildLine = function (indices) {
+    var count = indices.length;
+    var positions = new Float32Array(count * 3);
+    var colors = new Float32Array(count * 3);
+
+    for (var n = 0; n < count; n++) {
+      var gi = indices[n];
+      positions[n * 3] = pos.getX(gi);
+      positions[n * 3 + 1] = pos.getY(gi);
+      positions[n * 3 + 2] = pos.getZ(gi);
+    }
+
+    var geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    var colorAttr = new THREE.BufferAttribute(colors, 3);
+    geometry.setAttribute('color', colorAttr);
+
+    var line = new THREE.Line(geometry, material);
+    lines.add(line);
+
+    this.lineData.push({ line: line, indices: indices, positions: positions, colorAttr: colorAttr });
+  }.bind(this);
+
+  // Jitter the left/right edges of the shared plane grid (the r68 code did this
+  // inline while building horizontal lines, mutating the shared vertices).
+  if (this.parameters.horizontal) {
+    for (var jy = 0; jy < divY + 1; jy++) {
+      var left = gridIndex(0, jy);
+      var right = gridIndex(divX, jy);
+      pos.setX(left, pos.getX(left) - random(0, 20));
+      pos.setX(right, pos.getX(right) + random(0, 20));
+    }
+    pos.needsUpdate = true;
+  }
+
   if (this.parameters.vertical) {
-    for (var x = 0; x < this.parameters.divisionsX + 1; x++) {
-      var lineGeometry = new THREE.Geometry();
-
-      for (var y = 0; y < this.parameters.divisionsY + 1; y++) {
-        var vertex = this.geometry.vertices[x + ((y * this.parameters.divisionsX) + y)];
-        lineGeometry.vertices.push(vertex);
+    for (var x = 0; x < divX + 1; x++) {
+      var vIndices = [];
+      for (var vy = 0; vy < divY + 1; vy++) {
+        vIndices.push(gridIndex(x, vy));
       }
-
-      var line = new THREE.Line(lineGeometry, material);
-      lines.add(line);
+      buildLine(vIndices);
     }
   }
 
   if (this.parameters.horizontal) {
-    for (var y = 0; y < this.parameters.divisionsY + 1; y++) {
-      var lineGeometry = new THREE.Geometry();
-
-      for (var x = 0; x < this.parameters.divisionsX + 1; x++) {
-        var vertex = this.geometry.vertices[(y * (this.parameters.divisionsX + 1)) + x];
-        lineGeometry.vertices.push(vertex);
-
-        if (x === 0) {
-          vertex.x -= random(0, 20);
-        }
-
-        if (x === this.parameters.divisionsX) {
-          vertex.x += random(0, 20);
-        }
+    for (var y = 0; y < divY + 1; y++) {
+      var hIndices = [];
+      for (var hx = 0; hx < divX + 1; hx++) {
+        hIndices.push(gridIndex(hx, y));
       }
-
-      var line = new THREE.Line(lineGeometry, material);
-      lines.add(line);
+      buildLine(hIndices);
     }
   }
 
@@ -298,18 +341,24 @@ HeightMap.prototype.applyMap = function () {
 
   TweenLite.to({ factor: 1 }, 1, { factor: 0, ease: window.Elastic.easeOut,
       onUpdate: function () {
+        var pos = _this.geometry.attributes.position;
+        var arr = pos.array;
 
-        for (var i = 0, j = _this.geometry.vertices.length; i < j; i++) {
-          var vertex = _this.geometry.vertices[i];
+        for (var i = 0, j = pos.count; i < j; i++) {
           var offset = currentData[i] + ((previousData[i] - currentData[i]) * this.target.factor);
-          vertex.z = offset;
+          arr[i * 3 + 2] = offset;
         }
 
-        _this.geometry.verticesNeedUpdate = true;
+        pos.needsUpdate = true;
 
-        if (_this.lines) {
-          for (var k = 0, l = _this.lines.children.length; k < l; k++) {
-            _this.lines.children[k].geometry.verticesNeedUpdate = true;
+        // mirror the new heights onto each line's own position buffer
+        if (_this.lineData) {
+          for (var k = 0, l = _this.lineData.length; k < l; k++) {
+            var ld = _this.lineData[k];
+            for (var m = 0, n = ld.indices.length; m < n; m++) {
+              ld.positions[m * 3 + 2] = arr[ld.indices[m] * 3 + 2];
+            }
+            ld.line.geometry.attributes.position.needsUpdate = true;
           }
         }
 
@@ -326,52 +375,45 @@ HeightMap.prototype.applyMap = function () {
  * @method setColors
  */
 HeightMap.prototype.setColors = function () {
-  // lines
-  if (this.lines) {
-    for (var i = 0, j = this.lines.children.length; i < j; i++) {
-      var line = this.lines.children[i];
+  var _this = this;
+  var arr = this.geometry.attributes.position.array;
 
-      for (var k = 0, l = line.geometry.vertices.length; k < l; k++) {
-        var vertex = line.geometry.vertices[k];
+  // (255 + 255 + 255) / 10 = 76.5, 76.5 / 20 = 3.8
+  function colorForZ (z) {
+    var percent = map(z, [0, 3.8], [0, 2]);
+    percent = Math.round(percent * 10) / 10;
 
-        // (255 + 255 + 255) / 10 = 76.5, 76.5 / 20 = 3.8
-        var percent = map(vertex.z, [0, 3.8], [0, 2]);
-        percent = Math.round(percent * 10) / 10;
-
-        if (!this.colorsCache[percent]) {
-          this.colorsCache[percent] = this.fromColor.clone().lerp(this.toColor, percent);
-        }
-
-        line.geometry.colors[k] = this.colorsCache[percent];
-      }
-
-      line.geometry.colorsNeedUpdate = true;
+    if (!_this.colorsCache[percent]) {
+      _this.colorsCache[percent] = _this.fromColor.clone().lerp(_this.toColor, percent);
     }
+
+    return _this.colorsCache[percent];
   }
 
-  // planes/points
+  // planes/points (per-vertex colours on the shared geometry)
   if (this.plane || this.points) {
-    for (var i = 0, j = this.geometry.faces.length; i < j; i++) {
-      var face = this.geometry.faces[i];
+    var colorAttr = this.geometry.attributes.color;
 
-      // Assumption : instanceof THREE.Face3
-      for (var k = 0; k < 3; k++) {
-        var vertexIndex = face[this.faceIndices[k]];
-        var vertex = this.geometry.vertices[vertexIndex];
-
-        // (255 + 255 + 255) / 10 = 76.5, 76.5 / 20 = 3.8
-        var percent = map(vertex.z, [0, 3.8], [0, 2]);
-        percent = Math.round(percent * 10) / 10;
-
-        if (!this.colorsCache[percent]) {
-          this.colorsCache[percent] = this.fromColor.clone().lerp(this.toColor, percent);
-        }
-
-        face.vertexColors[k] = this.colorsCache[percent];
-      }
+    for (var i = 0, j = colorAttr.count; i < j; i++) {
+      var c = colorForZ(arr[i * 3 + 2]);
+      colorAttr.setXYZ(i, c.r, c.g, c.b);
     }
 
-    this.geometry.colorsNeedUpdate = true;
+    colorAttr.needsUpdate = true;
+  }
+
+  // lines
+  if (this.lineData) {
+    for (var k = 0, l = this.lineData.length; k < l; k++) {
+      var ld = this.lineData[k];
+
+      for (var m = 0, n = ld.indices.length; m < n; m++) {
+        var lc = colorForZ(arr[ld.indices[m] * 3 + 2]);
+        ld.colorAttr.setXYZ(m, lc.r, lc.g, lc.b);
+      }
+
+      ld.colorAttr.needsUpdate = true;
+    }
   }
 };
 
@@ -393,4 +435,4 @@ HeightMap.prototype.trigger = function () {
   this.events.trigger.apply(this.events, arguments);
 };
 
-module.exports = HeightMap;
+export default HeightMap;

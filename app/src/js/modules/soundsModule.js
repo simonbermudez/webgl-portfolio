@@ -1,14 +1,13 @@
 'use strict';
 
-var Howler = require('howler');
-var Howl = require('howl');
-var visibly = require('visibly');
+import { Howler } from 'howler';
+import { Howl } from 'howler';
 
 /**
  * Sounds module
  *
  * @module SOUNDS
- * @requires Howler, visibly
+ * @requires Howler
  */
 var SOUNDS = (function () {
   var instance;
@@ -109,13 +108,9 @@ var SOUNDS = (function () {
   };
 })();
 
-// tab active/inactive
-visibly.onHidden(function () {
-  Howler.mute(true);
+// tab active/inactive (native Page Visibility API; replaces the old visibly.js dep)
+document.addEventListener('visibilitychange', function () {
+  Howler.mute(document.hidden);
 });
 
-visibly.onVisible(function () {
-  Howler.mute(false);
-});
-
-module.exports = SOUNDS.getInstance();
+export default SOUNDS.getInstance();

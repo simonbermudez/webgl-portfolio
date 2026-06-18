@@ -2,10 +2,11 @@
 
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-var random = require('../utils/randomUtil');
+import random from '../utils/randomUtil.js';
 
 /**
  * Background floating particles/strips
@@ -22,11 +23,11 @@ var random = require('../utils/randomUtil');
 function BackgroundParticles (options) {
   var parameters = jQuery.extend(BackgroundParticles.defaultOptions, options);
 
-  var material = new THREE.PointCloudMaterial({
+  var material = new THREE.PointsMaterial({
     size: parameters.particleSize
   });
 
-  var geometry = new THREE.Geometry();
+  var particlesArray = [];
 
   for (var i = 0; i < parameters.count; i++) {
     var particle = new THREE.Vector3(
@@ -35,15 +36,17 @@ function BackgroundParticles (options) {
       random(-50, 100)
     );
 
-    geometry.vertices.push(particle);
+    particlesArray.push(particle);
   }
+
+  var geometry = new THREE.BufferGeometry().setFromPoints(particlesArray);
 
   var group = new THREE.Object3D();
 
-  group.add(new THREE.PointCloud(geometry, material));
+  group.add(new THREE.Points(geometry, material));
   
   if (parameters.strips) {
-    var stripsGeometry = new THREE.Geometry();
+    var stripParts = [];
 
     var stripGeometry = new THREE.PlaneGeometry(5, 2);
     var stripMaterial = new THREE.MeshLambertMaterial({ color: '#666666' });
@@ -63,8 +66,13 @@ function BackgroundParticles (options) {
       );
 
       stripMesh.updateMatrix();
-      stripsGeometry.merge(stripMesh.geometry, stripMesh.matrix);
-    } 
+
+      var g = stripMesh.geometry.clone();
+      g.applyMatrix4(stripMesh.matrix);
+      stripParts.push(g);
+    }
+
+    var stripsGeometry = BufferGeometryUtils.mergeGeometries(stripParts, false);
 
     var totalMesh = new THREE.Mesh(stripsGeometry, stripMaterial);
 
@@ -82,4 +90,4 @@ BackgroundParticles.defaultOptions = {
   stripsCount: 20
 };
 
-module.exports = BackgroundParticles;
+export default BackgroundParticles;

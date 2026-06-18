@@ -19,7 +19,7 @@
  * staggered animations keep their offset) and `.stop()` (kills gsap tweens).
  * Scroll animations and jQuery `step` callbacks fall back to native animate().
  */
-(function ($, gsap) {
+export default function installJqueryGsap($, gsap) {
   'use strict';
 
   if (!gsap) {
@@ -166,4 +166,4 @@
     return _stop.apply(this, arguments);
   };
 
-})(window.jQuery, window.gsap);
+}

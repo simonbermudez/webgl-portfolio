@@ -2,13 +2,13 @@
 
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var random = require('../utils/randomUtil');
-var map = require('../utils/mapUtil');
-var loop = require('../utils/loopUtil');
+import random from '../utils/randomUtil.js';
+import map from '../utils/mapUtil.js';
+import loop from '../utils/loopUtil.js';
 
 /**
  * @class Galaxy
@@ -116,8 +116,14 @@ function Galaxy (options) {
           }
         }
 
-        ring.geometry.colors = ring.geometry.colors.concat(ring.geometry.colors.splice(0, 1));
-        ring.geometry.colorsNeedUpdate = true;
+        var ringColors = ring.userData.colors;
+        ringColors.push(ringColors.shift());
+
+        var ringColorAttr = ring.geometry.getAttribute('color');
+        for (var c = 0, n = ringColors.length; c < n; c++) {
+          ringColorAttr.setXYZ(c, ringColors[c].r, ringColors[c].g, ringColors[c].b);
+        }
+        ringColorAttr.needsUpdate = true;
       },
       onComplete: loop
     });
@@ -159,9 +165,9 @@ Galaxy.prototype.getPlanet = function () {
  * @return {THREE.Line}
  */
 Galaxy.prototype.getRing = function () {
-  var material = new THREE.LineBasicMaterial({ vertexColors: THREE.VertexColors });
+  var material = new THREE.LineBasicMaterial({ vertexColors: true });
 
-  var geometry = new THREE.Geometry();
+  var vertices = [];
 
   var step = 2 * Math.PI / this.parameters.ringDivisions;
 
@@ -170,8 +176,10 @@ Galaxy.prototype.getRing = function () {
 
     var vertex = new THREE.Vector3(1 * Math.cos(theta), 1 * Math.sin(theta), 0);
 
-    geometry.vertices.push(vertex);
+    vertices.push(vertex);
   }
+
+  var geometry = new THREE.BufferGeometry().setFromPoints(vertices);
 
   var fromColor = new THREE.Color(this.parameters.ringFromColor);
   var toColor = new THREE.Color(this.parameters.ringToColor);
@@ -183,7 +191,7 @@ Galaxy.prototype.getRing = function () {
     colors[j] = fromColor.clone().lerp(toColor, percent);
   }
 
-  var total = geometry.vertices.length;
+  var total = vertices.length;
   var start = 0;
   var current = start;
 
@@ -201,11 +209,21 @@ Galaxy.prototype.getRing = function () {
     verticesColors.push(vertexColor);
   }
 
-  geometry.colors = verticesColors;
+  var colorAttr = new THREE.BufferAttribute(new Float32Array(total * 3), 3);
+
+  for (var m = 0; m < total; m++) {
+    var c = verticesColors[m];
+    colorAttr.setXYZ(m, c.r, c.g, c.b);
+  }
+
+  colorAttr.needsUpdate = true;
+  geometry.setAttribute('color', colorAttr);
 
   var ring = new THREE.Line(geometry, material);
+
+  ring.userData.colors = verticesColors;
 
   return ring;
 };
 
-module.exports = Galaxy;
+export default Galaxy;

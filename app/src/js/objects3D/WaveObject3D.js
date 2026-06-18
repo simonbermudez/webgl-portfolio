@@ -1,10 +1,10 @@
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var loop = require('../utils/loopUtil');
+import loop from '../utils/loopUtil.js';
 
 /**
  * Animated wave
@@ -32,16 +32,17 @@ function Wave (options) {
   function updateWave () {
     var i= 0;
 
+    var pos = plane.geometry.attributes.position;
+
     for (var x = 0; x <= divisionsX; x++) {
       for (var y = 0; y <= divisionsY; y++) {
-        var vertex = plane.geometry.vertices[i++];
-        vertex.z =
+        pos.setZ(i++,
           (Math.sin(((x + 1) + time) * 0.2) * 2) +
-          (Math.sin(((y + 1) + time) * 0.2) * 5);
+          (Math.sin(((y + 1) + time) * 0.2) * 5));
       }
     }
 
-    plane.geometry.verticesNeedUpdate = true;
+    pos.needsUpdate = true;
     time += 0.1;
   }
 
@@ -88,7 +89,7 @@ Wave.defaultOptions = {
  * @return {THREE.Mesh}
  */
 Wave.prototype.getPlane = function () {
-  var texture = THREE.ImageUtils.loadTexture('./app/public/img/texture-wave.png');
+  var texture = new THREE.TextureLoader().load('./app/public/img/texture-wave.png');
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(20, 20);
 
@@ -112,4 +113,4 @@ Wave.prototype.getPlane = function () {
   return mesh;
 };
 
-module.exports = Wave;
+export default Wave;

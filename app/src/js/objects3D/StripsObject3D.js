@@ -1,10 +1,10 @@
 'use strict';
   
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var random = require('../utils/randomUtil');
+import random from '../utils/randomUtil.js';
 
 /**
  * Animated strip
@@ -22,6 +22,14 @@ var random = require('../utils/randomUtil');
  * @pram {Array} [options.rangeZ=[-50, 50]] Z position range
  * @requires jQuery, THREE, TweenLite, random
  */
+function cornerIndex (pos, signX, signY, w, h) {
+  var tx = signX * w / 2, ty = signY * h / 2;
+  for (var i = 0; i < pos.count; i++) {
+    if (Math.abs(pos.getX(i) - tx) < 1e-4 && Math.abs(pos.getY(i) - ty) < 1e-4) return i;
+  }
+  return -1;
+}
+
 function Strip (options) {
   this.parameters = jQuery.extend(Strip.defaultOptions, options);
 
@@ -52,16 +60,27 @@ function Strip (options) {
     this.el.add(mesh);
   }
 
-  this.from = this.geometry.vertices[0].x;
-  this.to = this.geometry.vertices[1].x;
+  var pos = this.geometry.attributes.position;
+
+  // r68 index 0 = top-left (-x,+y), 1 = top-right (+x,+y), 3 = bottom-right (+x,-y)
+  this._topLeftIndex = cornerIndex(pos, -1, 1, this.parameters.width, this.parameters.height);
+  this._topRightIndex = cornerIndex(pos, 1, 1, this.parameters.width, this.parameters.height);
+  this._bottomRightIndex = cornerIndex(pos, 1, -1, this.parameters.width, this.parameters.height);
+
+  this.from = pos.getX(this._topLeftIndex);
+  this.to = pos.getX(this._topRightIndex);
   this.cache =  { x: this.from };
 
-  this.geometry.vertices[1].x = this.geometry.vertices[3].x = this.geometry.vertices[0].x;
+  pos.setX(this._topRightIndex, this.from);
+  pos.setX(this._bottomRightIndex, this.from);
+  pos.needsUpdate = true;
 };
 
 Strip.prototype.update = function () {
-  this.geometry.vertices[1].x = this.geometry.vertices[3].x = this.cache.x;
-  this.geometry.verticesNeedUpdate = true;
+  var pos = this.geometry.attributes.position;
+  pos.setX(this._topRightIndex, this.cache.x);
+  pos.setX(this._bottomRightIndex, this.cache.x);
+  pos.needsUpdate = true;
   this.geometry.computeBoundingSphere();
 };
 
@@ -88,4 +107,4 @@ Strip.defaultOptions = {
   rangeZ: [-50, 50]
 };
 
-module.exports = Strip;
+export default Strip;

@@ -1,10 +1,10 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
-var MobileUtils = require('../utils/mobileUtils');
+import Section from '../classes/SectionClass.js';
+import MobileUtils from '../utils/mobileUtils.js';
 
-var TextPanel = require('../objects3D/TextPanelObject3D');
-var HeightMap = require('../objects3D/HeightMapObject3D');
+import TextPanel from '../objects3D/TextPanelObject3D.js';
+import HeightMap from '../objects3D/HeightMapObject3D.js';
 
 var heightSection = new Section('height');
 
@@ -73,4 +73,4 @@ heightSection.hide = function () {
   heightMap.el.visible = false;
 };
 
-module.exports = heightSection;
+export default heightSection;

@@ -1,12 +1,12 @@
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var SOUNDS = require('../modules/soundsModule');
-var random = require('../utils/randomUtil');
-var yoyo = require('../utils/yoyoUtil');
+import SOUNDS from '../modules/soundsModule.js';
+import random from '../utils/randomUtil.js';
+import yoyo from '../utils/yoyoUtil.js';
 
 /**
  * Animated Neon
@@ -192,7 +192,7 @@ Neon.prototype.getTube = function () {
  * @return {THREE.Mesh}
  */
 Neon.prototype.getGlow = function () {
-  var texture = new THREE.ImageUtils.loadTexture('./app/public/img/texture-neonGlow.png');
+  var texture = new THREE.TextureLoader().load('./app/public/img/texture-neonGlow.png');
   var material = new THREE.MeshBasicMaterial({
     side: THREE.DoubleSide,
     map: texture,
@@ -236,7 +236,7 @@ Neon.prototype.getGlows = function (glow) {
  * @return {THREE.Mesh}
  */
 Neon.prototype.getProjection = function () {
-  var texture = THREE.ImageUtils.loadTexture('./app/public/img/texture-neonProjection.png');
+  var texture = new THREE.TextureLoader().load('./app/public/img/texture-neonProjection.png');
   var material = new THREE.MeshBasicMaterial({
     side: THREE.DoubleSide,
     map: texture,
@@ -255,4 +255,4 @@ Neon.prototype.getProjection = function () {
   return mesh;
 };
 
-module.exports = Neon;
+export default Neon;

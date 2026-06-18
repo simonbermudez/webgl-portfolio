@@ -1,11 +1,11 @@
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var random = require('../utils/randomUtil');
-var yoyo = require('../utils/yoyoUtil');
+import random from '../utils/randomUtil.js';
+import yoyo from '../utils/yoyoUtil.js';
 
 /**
  * Animated grid
@@ -32,22 +32,24 @@ function Grid (options) {
   var vertices = this.getVertices();
 
   if (this.parameters.points) {
-    var pointsGeometry = new THREE.Geometry();
+    var pointsPositions = [];
 
     for (var i = 0, j = vertices.length; i < j; i++) {
-      pointsGeometry.vertices.push(vertices[i][0]);
-      pointsGeometry.vertices.push(vertices[i][1]);
-      pointsGeometry.vertices.push(vertices[i][2]);
+      pointsPositions.push(vertices[i][0]);
+      pointsPositions.push(vertices[i][1]);
+      pointsPositions.push(vertices[i][2]);
     }
-    
-    var pointsMaterial = new THREE.PointCloudMaterial({ size: 0.2 });
-    var points = new THREE.PointCloud(pointsGeometry, pointsMaterial);
+
+    var pointsGeometry = new THREE.BufferGeometry().setFromPoints(pointsPositions);
+
+    var pointsMaterial = new THREE.PointsMaterial({ size: 0.2 });
+    var points = new THREE.Points(pointsGeometry, pointsMaterial);
 
     group.add(points);
   }
 
   var lineMaterial = new THREE.LineBasicMaterial({
-    vertexColors: THREE.VertexColors,
+    vertexColors: true,
     linewidth: 1
   });
 
@@ -58,27 +60,32 @@ function Grid (options) {
   var idleTweens = [];
 
   for (var k = 0, l = vertices.length; k < l; k++) {
-    var lineGeometry = new THREE.Geometry();
-
     var firstTo = vertices[k][0].clone();
     var secondTo = vertices[k][2].clone();
 
-    lineGeometry.vertices.push(vertices[k][1].clone());
-    lineGeometry.vertices.push(vertices[k][1]);
-    lineGeometry.vertices.push(vertices[k][1].clone());
+    var lineVertices = [
+      vertices[k][1].clone(),
+      vertices[k][1],
+      vertices[k][1].clone()
+    ];
 
-    for (var m = 0, n = lineGeometry.vertices.length; m < n; m++) {
+    var lineGeometry = new THREE.BufferGeometry().setFromPoints(lineVertices);
+
+    var colorAttr = new THREE.BufferAttribute(new Float32Array(lineVertices.length * 3), 3);
+    lineGeometry.setAttribute('color', colorAttr);
+
+    for (var m = 0, n = lineVertices.length; m < n; m++) {
 
       var color = null;
       var percent = null;
 
       if (k >= this.parameters.divisionsX) {
         // horizontal
-        var y = lineGeometry.vertices[m].y;
+        var y = lineVertices[m].y;
         percent = Math.abs((y * 100 / this.height) / 100);
       } else {
         // vertical
-        var x = lineGeometry.vertices[m].x;
+        var x = lineVertices[m].x;
         percent = Math.abs((x * 100 / this.width) / 100);
       }
 
@@ -89,16 +96,19 @@ function Grid (options) {
         color = colorsCache[percent];
       }
 
-      lineGeometry.colors.push(toColor);
-      lineGeometry.colors.push(color);
-      lineGeometry.colors.push(toColor);
+      colorAttr.setXYZ(0, toColor.r, toColor.g, toColor.b);
+      colorAttr.setXYZ(1, color.r, color.g, color.b);
+      colorAttr.setXYZ(2, toColor.r, toColor.g, toColor.b);
     }
+    colorAttr.needsUpdate = true;
 
     var line = new THREE.Line(lineGeometry, lineMaterial);
 
-    idleTweens.push(this.getTween(line, line.geometry.vertices[0], firstTo));
-    idleTweens.push(this.getTween(line, line.geometry.vertices[2], secondTo));
-    
+    var linePositions = lineGeometry.attributes.position.array;
+
+    idleTweens.push(this.getTween(line, linePositions, 0, firstTo));
+    idleTweens.push(this.getTween(line, linePositions, 2, secondTo));
+
     group.add(line);
   }
 
@@ -176,15 +186,27 @@ Grid.prototype.getVertices = function () {
  *
  * @method getTween
  * @param {THREE.Line} [line] Line to animate
- * @param {THREE.Vector3} [from] Start coordinates
+ * @param {Float32Array} [positions] Geometry position buffer to mutate
+ * @param {Number} [vertexIndex] Index of the vertex to animate
  * @param {THREE.Vector3} [to] End coordinates
  */
-Grid.prototype.getTween = function (line, from, to) {
+Grid.prototype.getTween = function (line, positions, vertexIndex, to) {
+  var offset = vertexIndex * 3;
+
+  var from = {
+    x: positions[offset + 0],
+    y: positions[offset + 1],
+    z: positions[offset + 2]
+  };
+
   var parameters = {
     paused: true,
     delay: random(0, 2),
     onUpdate: function () {
-      line.geometry.verticesNeedUpdate = true;
+      positions[offset + 0] = from.x;
+      positions[offset + 1] = from.y;
+      positions[offset + 2] = from.z;
+      line.geometry.attributes.position.needsUpdate = true;
       line.geometry.computeBoundingSphere();
     },
     onComplete: yoyo,
@@ -197,4 +219,4 @@ Grid.prototype.getTween = function (line, from, to) {
   return TweenLite.to(from, random(1, 2), parameters);
 };
 
-module.exports = Grid;
+export default Grid;

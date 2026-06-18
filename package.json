@@ -1,49 +1,23 @@
 {
   "name": "2015",
-  "debug": true,
-  "watch": true,
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
   "devDependencies": {
-    "browserify": "^17.0.1",
-    "browserify-shim": "^3.8.16",
-    "fancy-log": "^2.0.0",
-    "gulp": "^5.0.1",
-    "gulp-clean-css": "^4.3.0",
-    "gulp-concat": "^2.6.1",
-    "gulp-connect": "^5.7.0",
-    "gulp-htmlmin": "^5.0.1",
-    "gulp-jshint": "^2.1.0",
-    "gulp-less": "^5.0.0",
-    "gulp-notify": "^5.0.0",
-    "gulp-rename": "^2.1.0",
-    "gulp-uglify": "^3.0.2",
-    "jshint": "^2.13.6",
-    "jshint-stylish": "^2.2.1",
-    "vinyl-buffer": "^1.0.1",
-    "vinyl-source-stream": "^2.0.0",
-    "watchify": "^4.0.0"
+    "less": "^4.6.6",
+    "vite": "^8.0.16",
+    "vite-plugin-static-copy": "^4.1.1"
   },
-  "browser": {
-    "jquery": "./app/src/vendor/jquery/dist/jquery.js",
-    "three": "./app/src/vendor/threejs/build/three.js",
-    "tweenlite": "./app/src/vendor/gsap/dist/gsap.js",
-    "tweenlite.jquery": "./app/src/shims/jquery.gsap.js",
-    "howler": "./app/src/vendor/howler/dist/howler.js",
-    "visibly": "./app/src/vendor/visibly.js/visibly.js",
-    "skrollr": "./app/src/vendor/skrollr/src/skrollr.js"
-  },
-  "browserify-shim": {
-    "jquery": "global:jQuery",
-    "three": "global:THREE",
-    "tween": "global:TWEEN",
-    "tweenlite": "global:TweenLite",
-    "howler": "global:Howler",
-    "howl": "global:Howl",
-    "visibly": "global:visibly",
-    "skrollr": "global:skrollr"
-  },
-  "browserify": {
-    "transform": [
-      "browserify-shim"
-    ]
+  "dependencies": {
+    "gsap": "^3.15.0",
+    "howler": "^2.2.4",
+    "jquery": "^4.0.0",
+    "normalize.css": "^8.0.1",
+    "skrollr": "^0.6.26",
+    "three": "^0.184.0"
   }
 }

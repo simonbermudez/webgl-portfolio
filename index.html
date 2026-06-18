@@ -122,66 +122,8 @@
     <div class="loader__progress" aria-hidden="true"></div>
   </div>
 
-  <script type="text/javascript">
-    document = window.document;
-
-    (function () {
-      /* jshint strict: false */
-      /* jshint laxbreak: true */
-
-      if (!window.console) { window.console = {}; }
-      var methods = ['log', 'debug', 'warn', 'info'];
-      for (var i = 0; i < methods.length; i++){
-        console[methods[i]] = function () {};
-      }
-
-      // features
-      function mobile () {
-        return navigator.userAgent.match(/Android/i)
-          || navigator.userAgent.match(/webOS/i)
-          || navigator.userAgent.match(/iPhone/i)
-          || navigator.userAgent.match(/iPad/i)
-          || navigator.userAgent.match(/iPod/i)
-          || navigator.userAgent.match(/BlackBerry/i)
-          || navigator.userAgent.match(/Windows Phone/i);
-      }
-
-      function webGL () {
-        try {
-          var canvas = document.createElement('canvas'); 
-          return !! window.WebGLRenderingContext
-            && (canvas.getContext('webgl')
-            || canvas.getContext('experimental-webgl'));
-
-        } catch (e) {
-          return false;
-        }
-      }
-
-      var cssPayload = document.createElement('link');
-      cssPayload.rel = 'stylesheet';
-      cssPayload.type = 'text/css';
-
-      var jsPayload = document.createElement('script');
-      jsPayload.type = 'text/javascript';
-      jsPayload.async = jsPayload.defer = false;
-
-      var prefix;
-      if (webGL()) {
-        prefix = '3D';
-      } else {
-        prefix = '2D';
-      }
-
-      cssPayload.href = './app/dist/css/' + prefix + '/main.css';
-      jsPayload.src = './app/dist/js/' + prefix + '/bundle.js';
-
-      var head = document.getElementsByTagName('head')[0];
-
-      head.appendChild(cssPayload);
-      head.appendChild(jsPayload);
-    })();
-  </script>
+  <!-- Vite entry: picks the WebGL (3D) or fallback (2D) experience at runtime -->
+  <script type="module" src="/app/src/js/index.js"></script>
 
   <div class="help">
     <div class="help__quit">

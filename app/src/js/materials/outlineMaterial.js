@@ -1,6 +1,6 @@
 'use strict';
 
-var THREE = require('three');
+import * as THREE from 'three';
 
 /**
  * Basic material that accepts vec4 as vertices colors (rgba).
@@ -10,11 +10,11 @@ var THREE = require('three');
  */
 var outlineShader = new THREE.ShaderMaterial({
   uniforms: {
-    time: { type: 'f', value: 1 }
+    time: { value: 1 }
   },
-  attributes: {
-    customColor: { type: 'v4', value: [] }
-  },
+  // Custom vertex attributes are no longer declared on the material; the
+  // `customColor` (vec4) BufferAttribute is set per-geometry in CityObject3D and
+  // bound automatically by name to the `attribute vec4 customColor;` below.
   vertexShader: [
 
     'attribute vec4 customColor;',
@@ -41,4 +41,4 @@ var outlineShader = new THREE.ShaderMaterial({
   side: THREE.BackSide
 });
 
-module.exports = outlineShader;
+export default outlineShader;

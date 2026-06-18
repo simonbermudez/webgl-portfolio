@@ -1,10 +1,10 @@
 'use strict';
   
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var random = require('../utils/randomUtil');
+import random from '../utils/randomUtil.js';
 
 /**
  * Cloud of meshes looking at the same coordinates
@@ -24,7 +24,7 @@ function LookAtField (options) {
 
   var triangleGeometry = new THREE.TetrahedronGeometry(3);
 
-  var triangleMaterial = new THREE.MeshLambertMaterial({ shading: THREE.FlatShading });
+  var triangleMaterial = new THREE.MeshLambertMaterial({ flatShading: true });
   var triangleMesh = new THREE.Mesh(triangleGeometry, triangleMaterial);
 
   var group = new THREE.Object3D();
@@ -68,4 +68,4 @@ function LookAtField (options) {
   };
 }
 
-module.exports = LookAtField;
+export default LookAtField;

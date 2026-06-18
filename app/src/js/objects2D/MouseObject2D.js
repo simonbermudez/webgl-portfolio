@@ -58,4 +58,4 @@ Mouse.prototype.stop = function () {
   window.clearInterval(this.interval);
 };
 
-module.exports = Mouse;
+export default Mouse;

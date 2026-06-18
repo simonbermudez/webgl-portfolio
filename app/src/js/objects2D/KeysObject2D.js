@@ -55,4 +55,4 @@ Keys.prototype.stop = function () {
   window.clearInterval(this.interval);
 };
 
-module.exports = Keys;
+export default Keys;

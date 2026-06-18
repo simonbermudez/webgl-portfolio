@@ -1,11 +1,11 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
-var MobileUtils = require('../utils/mobileUtils');
+import Section from '../classes/SectionClass.js';
+import MobileUtils from '../utils/mobileUtils.js';
 
-var TextPanel = require('../objects3D/TextPanelObject3D');
-var Face = require('../objects3D/FaceHpObject3D');
-var Strips = require('../objects3D/StripsObject3D');
+import TextPanel from '../objects3D/TextPanelObject3D.js';
+import Face from '../objects3D/FaceHpObject3D.js';
+import Strips from '../objects3D/StripsObject3D.js';
 
 var faceSection = new Section('face');
 
@@ -68,4 +68,4 @@ faceSection.onStop(function () {
   strips.el.visible = false;
 });
 
-module.exports = faceSection;
+export default faceSection;

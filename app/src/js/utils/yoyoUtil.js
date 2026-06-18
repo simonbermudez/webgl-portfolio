@@ -16,4 +16,4 @@ function yoyo () {
   }
 }
 
-module.exports = yoyo;
+export default yoyo;

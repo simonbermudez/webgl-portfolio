@@ -2,11 +2,11 @@
 
 'use strict';
 
-var jQuery = require('jquery');
+import jQuery from 'jquery';
 
-var debounce = require('../utils/debounceUtil');
+import debounce from '../utils/debounceUtil.js';
 
-module.exports = (function ($) {
+export default (function ($) {
   /**
    * Trigger event on element when they enter/leave viewport
    *

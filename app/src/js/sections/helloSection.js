@@ -1,9 +1,9 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
+import Section from '../classes/SectionClass.js';
 
-var Title = require('../objects3D/HelloTitleObject3D');
-var Smoke = require('../objects3D/SmokeObject3D');
+import Title from '../objects3D/HelloTitleObject3D.js';
+import Smoke from '../objects3D/SmokeObject3D.js';
 
 var helloSection = new Section('hello');
 
@@ -67,4 +67,4 @@ helloSection.smokeStop = function () {
   smoke.el.visible = false;
 };
 
-module.exports = helloSection;
+export default helloSection;

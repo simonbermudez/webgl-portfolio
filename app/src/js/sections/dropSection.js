@@ -1,10 +1,10 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
-var MobileUtils = require('../utils/mobileUtils');
+import Section from '../classes/SectionClass.js';
+import MobileUtils from '../utils/mobileUtils.js';
 
-var TextPanel = require('../objects3D/TextPanelObject3D');
-var Drop = require('../objects3D/DropObject3D');
+import TextPanel from '../objects3D/TextPanelObject3D.js';
+import Drop from '../objects3D/DropObject3D.js';
 
 var dropSection = new Section('drop');
 
@@ -53,4 +53,4 @@ dropSection.onStop(function () {
   drop.el.visible = false;
 });
 
-module.exports = dropSection;
+export default dropSection;

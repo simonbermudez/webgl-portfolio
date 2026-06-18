@@ -1,6 +1,6 @@
 'use strict';
 
-var THREE = require('three');
+import * as THREE from 'three';
 
 /**
  * Dilate a geometry along the normals
@@ -10,35 +10,26 @@ var THREE = require('three');
  * @param {Number} [offset] Desired offset
  */
 function dilate (geometry, offset) {
-  geometry.computeVertexNormals();
-
-  // vertices normals
-  var vertexNormals = new Array(geometry.vertices.length);
-
-  for (var i = 0, j = geometry.faces.length; i < j; i++) {
-    var face = geometry.faces[i];
-    
-    if (face instanceof THREE.Face4) {
-      vertexNormals[face.a] = face.vertexNormals[0];
-      vertexNormals[face.b] = face.vertexNormals[1];
-      vertexNormals[face.c] = face.vertexNormals[2];
-      vertexNormals[face.d] = face.vertexNormals[3]; 
-    } else if (face instanceof THREE.Face3) {
-      vertexNormals[face.a] = face.vertexNormals[0];
-      vertexNormals[face.b] = face.vertexNormals[1];
-      vertexNormals[face.c] = face.vertexNormals[2];
-    }
+  // Smooth (averaged) per-vertex normals. On an indexed BufferGeometry
+  // computeVertexNormals averages across shared faces, matching what the old
+  // Geometry.computeVertexNormals did before offsetting.
+  if (!geometry.attributes.normal) {
+    geometry.computeVertexNormals();
   }
 
-  // offset vertices
-  for (var k = 0, l = geometry.vertices.length; k < l; k++) {
-    var vertex = geometry.vertices[k];
-    var normal = vertexNormals[k];
+  var position = geometry.attributes.position;
+  var normal = geometry.attributes.normal;
 
-    vertex.x += normal.x * offset;
-    vertex.y += normal.y * offset;
-    vertex.z += normal.z * offset;
+  for (var i = 0, j = position.count; i < j; i++) {
+    position.setXYZ(
+      i,
+      position.getX(i) + normal.getX(i) * offset,
+      position.getY(i) + normal.getY(i) * offset,
+      position.getZ(i) + normal.getZ(i) * offset
+    );
   }
+
+  position.needsUpdate = true;
 }
 
-module.exports = dilate;
+export default dilate;

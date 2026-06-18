@@ -1,21 +1,21 @@
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var SPRITE3D = require('../libs/sprite3DLib');
+import SPRITE3D from '../libs/sprite3DLib.js';
 
-var SOUNDS = require('../modules/soundsModule');
+import SOUNDS from '../modules/soundsModule.js';
 
-var Events = require('../classes/EventsClass');
+import Events from '../classes/EventsClass.js';
 
-var MapObj = require('../objects2D/MapObject2D');
+import MapObj from '../objects2D/MapObject2D.js';
 
-var BackgroundParticles = require('../objects3D/BackgroundParticlesObject3D');
-var BackgroundLines = require('../objects3D/BackgroundLinesObject3D');
+import BackgroundParticles from '../objects3D/BackgroundParticlesObject3D.js';
+import BackgroundLines from '../objects3D/BackgroundLinesObject3D.js';
 
-var MobileUtils = require('../utils/mobileUtils');
+import MobileUtils from '../utils/mobileUtils.js';
 
 /**
  * 3D Scene
@@ -775,4 +775,4 @@ var SCENE = (function () {
   };
 })();
 
-module.exports = SCENE.getInstance();
+export default SCENE.getInstance();

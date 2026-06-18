@@ -1,11 +1,11 @@
 'use strict';
 
-var jQuery = require('jquery');
-var THREE = require('three');
-var TweenLite = require('tweenlite');
+import jQuery from 'jquery';
+import * as THREE from 'three';
+import { TweenLite } from 'gsap';
 
-var random = require('../utils/randomUtil');
-var yoyo = require('../utils/yoyoUtil');
+import random from '../utils/randomUtil.js';
+import yoyo from '../utils/yoyoUtil.js';
 
 /**
  * Light beam
@@ -38,9 +38,9 @@ function Beam (options) {
     color: parameters.color
   });
 
-  var bodyTexture = THREE.ImageUtils.loadTexture('./app/public/img/texture-laserBody.png');
-  var capTexture = THREE.ImageUtils.loadTexture('./app/public/img/texture-laserCap.png');
-  var flareTexture = THREE.ImageUtils.loadTexture('./app/public/img/texture-laserFlare.png');
+  var bodyTexture = new THREE.TextureLoader().load('./app/public/img/texture-laserBody.png');
+  var capTexture = new THREE.TextureLoader().load('./app/public/img/texture-laserCap.png');
+  var flareTexture = new THREE.TextureLoader().load('./app/public/img/texture-laserFlare.png');
 
   var lineMaterial = new THREE.LineBasicMaterial({ color: parameters.color });
   var bodyMaterial = baseMaterial.clone();
@@ -62,10 +62,32 @@ function Beam (options) {
     parameters.cubeSize
   );
 
-  // set height 0
-  bodyGeometry.vertices[2].y = bodyGeometry.vertices[3].y = (height / 2) + (width / 2);
-  bodyGeometry.verticesNeedUpdate = true;
-  bodyGeometry.computeBoundingSphere();
+  // The body plane's top edge is animated up/down to grow the beam. Modern
+  // PlaneGeometry is a BufferGeometry, so locate the top-row vertices by their
+  // (max) y and move them through the position attribute instead of the old
+  // geometry.vertices[2|3].
+  var bodyPosition = bodyGeometry.attributes.position;
+  var bodyTopIndices = [];
+  (function () {
+    var maxY = -Infinity;
+    for (var i = 0; i < bodyPosition.count; i++) {
+      maxY = Math.max(maxY, bodyPosition.getY(i));
+    }
+    for (var i = 0; i < bodyPosition.count; i++) {
+      if (bodyPosition.getY(i) === maxY) { bodyTopIndices.push(i); }
+    }
+  })();
+
+  function setBodyTopY (y) {
+    for (var i = 0; i < bodyTopIndices.length; i++) {
+      bodyPosition.setY(bodyTopIndices[i], y);
+    }
+    bodyPosition.needsUpdate = true;
+    bodyGeometry.computeBoundingSphere();
+  }
+
+  // set initial height
+  setBodyTopY((height / 2) + (width / 2));
 
   var bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
   var capMeshTop = new THREE.Mesh(capGeometry, capMaterial);
@@ -79,10 +101,11 @@ function Beam (options) {
   capMeshBottom.rotation.z = Math.PI;
   flareMesh.position.y = -(height / 2) - (width / 2);
 
-  // line
-  var lineGeometry = new THREE.Geometry();
-  lineGeometry.vertices.push(new THREE.Vector3(0, (height / 2) + (width / 2), 0));
-  lineGeometry.vertices.push(new THREE.Vector3(0, (height / 2) + (width / 2), 0));
+  // line (2 vertices; the second one's y is animated)
+  var lineTopY = (height / 2) + (width / 2);
+  var linePositions = new Float32Array([0, lineTopY, 0, 0, lineTopY, 0]);
+  var lineGeometry = new THREE.BufferGeometry();
+  lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
 
   var lineMesh = new THREE.Line(lineGeometry, lineMaterial);
 
@@ -124,13 +147,11 @@ function Beam (options) {
     
     var extremity = this.target.y - (width /2);
 
-    lineGeometry.vertices[1].y = extremity;
-    lineGeometry.verticesNeedUpdate = true;
+    linePositions[4] = extremity;
+    lineGeometry.attributes.position.needsUpdate = true;
     lineGeometry.computeBoundingSphere();
 
-    bodyGeometry.vertices[2].y = bodyGeometry.vertices[3].y = this.target.y;
-    bodyGeometry.verticesNeedUpdate = true;
-    bodyGeometry.computeBoundingSphere();
+    setBodyTopY(this.target.y);
 
     capMeshBottom.position.y = extremity;
 
@@ -201,4 +222,4 @@ Beam.defaultOptions = {
     delay: 0
   };
 
-module.exports = Beam;
+export default Beam;

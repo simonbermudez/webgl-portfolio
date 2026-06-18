@@ -1,6 +1,6 @@
 'use strict';
 
-var THREE = require('three');
+import * as THREE from 'three';
 
 var sphereEnvMapShader = new THREE.ShaderMaterial({
   uniforms: {
@@ -42,4 +42,4 @@ var sphereEnvMapShader = new THREE.ShaderMaterial({
   ].join('\n')
 });
 
-module.exports = sphereEnvMapShader;
+export default sphereEnvMapShader;

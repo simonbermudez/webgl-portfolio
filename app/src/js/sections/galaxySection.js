@@ -1,10 +1,10 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
-var MobileUtils = require('../utils/mobileUtils');
+import Section from '../classes/SectionClass.js';
+import MobileUtils from '../utils/mobileUtils.js';
 
-var TextPanel = require('../objects3D/TextPanelObject3D');
-var Galaxy = require('../objects3D/GalaxyObject3D');
+import TextPanel from '../objects3D/TextPanelObject3D.js';
+import Galaxy from '../objects3D/GalaxyObject3D.js';
 
 var galaxySection = new Section('galaxy');
 
@@ -52,4 +52,4 @@ galaxySection.onStop(function () {
   galaxy.el.visible = false;
 });
 
-module.exports = galaxySection;
+export default galaxySection;

@@ -1,11 +1,11 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
-var MobileUtils = require('../utils/mobileUtils');
+import Section from '../classes/SectionClass.js';
+import MobileUtils from '../utils/mobileUtils.js';
 
-var TextPanel = require('../objects3D/TextPanelObject3D');
-var Ball = require('../objects3D/BallObject3D');
-var Grid = require('../objects3D/GridObject3D');
+import TextPanel from '../objects3D/TextPanelObject3D.js';
+import Ball from '../objects3D/BallObject3D.js';
+import Grid from '../objects3D/GridObject3D.js';
 
 var ballSection = new Section('ball');
 
@@ -74,4 +74,4 @@ ballSection.onStop(function () {
   grid.el.visible = false;
 });
 
-module.exports = ballSection;
+export default ballSection;

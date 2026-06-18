@@ -1,10 +1,10 @@
 'use strict';
   
-var Section = require('../classes/SectionClass');
-var MobileUtils = require('../utils/mobileUtils');
+import Section from '../classes/SectionClass.js';
+import MobileUtils from '../utils/mobileUtils.js';
 
-var TextPanel = require('../objects3D/TextPanelObject3D');
-var LookAtField = require('../objects3D/LookAtFieldObject3D');
+import TextPanel from '../objects3D/TextPanelObject3D.js';
+import LookAtField from '../objects3D/LookAtFieldObject3D.js';
 
 var endSection = new Section('end');
 
@@ -38,4 +38,4 @@ endSection.onOut(function (way) {
   field.out(way);
 });
 
-module.exports = endSection;
+export default endSection;

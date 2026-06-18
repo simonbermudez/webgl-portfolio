@@ -1,7 +1,8 @@
 .DS_Store
 node_modules
+dist
 app/dist
 app/src/vendor
-/index.html
+.claude
 /email.html
 /emailFR.html

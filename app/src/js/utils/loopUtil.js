@@ -12,4 +12,4 @@ function loop () {
   this.restart();
 }
 
-module.exports = loop;
+export default loop;

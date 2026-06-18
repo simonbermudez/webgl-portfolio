@@ -1,8 +1,8 @@
 'use strict';
 
-var Section = require('../classes/SectionClass');
+import Section from '../classes/SectionClass.js';
 
-var Beam = require('../objects3D/BeamObject3D');
+import Beam from '../objects3D/BeamObject3D.js';
 
 var beamsSection = new Section('beams');
 
@@ -54,4 +54,4 @@ beamsSection.onStop(function () {
   rightBeam.el.visible = false;
 });
 
-module.exports = beamsSection;
+export default beamsSection;
