@@ -1,0 +1,619 @@
+//
+// ABOUT / PORTFOLIO panel (the `.tails` view).
+//
+// Crisp, accessible DOM content composited over a live three.js backdrop
+// (see app/src/js/modules/aboutModule.js). Dark glassmorphism so the WebGL
+// scene reads through behind the text while copy stays legible.
+//
+
+@about-bg:        #06070c;
+@about-text:      #e9edf6;
+@about-muted:     #8b93a7;
+@about-cyan:      #00d8f0;
+@about-magenta:   #c44bff;
+@about-glass:     rgba(16, 20, 32, 0.55);
+@about-glass-soft: rgba(16, 20, 32, 0.35);
+@about-border:    rgba(255, 255, 255, 0.09);
+
+// The tails panel itself ---------------------------------------------------
+.tails.about {
+  background-color: @about-bg;
+  color: @about-text;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+// Pinned WebGL backdrop: sticky inside the scroll container, pulled back up
+// with a negative margin so the content scrolls over it.
+.about__bg {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+
+  width: 100%;
+  height: 100vh;
+  margin-bottom: -100vh;
+
+  pointer-events: none;
+
+  // CSS fallback gradient if WebGL is unavailable.
+  background:
+    radial-gradient(120% 80% at 70% 0%, rgba(196, 75, 255, 0.18), transparent 60%),
+    radial-gradient(120% 90% at 20% 100%, rgba(0, 216, 240, 0.16), transparent 55%),
+    @about-bg;
+}
+
+.about__bg canvas {
+  display: block;
+
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.about__content {
+  position: relative;
+  z-index: 1;
+}
+
+// Section scaffold ---------------------------------------------------------
+.about .tails__section {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 96px 44px;
+
+  text-align: left;
+}
+
+.about__h2 {
+  font-size: 13px;
+  font-weight: 400;
+
+  margin: 0 0 44px;
+
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: @about-cyan;
+}
+
+.about__h3 {
+  font-size: 18px;
+  font-weight: 400;
+
+  margin: 0 0 14px;
+
+  letter-spacing: 2px;
+  color: @about-text;
+}
+
+.about__text,
+.about__lead {
+  color: @about-muted;
+
+  font-size: 17px;
+  line-height: 30px;
+}
+
+.about__lead {
+  font-size: 21px;
+  line-height: 34px;
+  color: @about-text;
+}
+
+// Glass surface mixin ------------------------------------------------------
+.about-glass () {
+  background: @about-glass;
+  border: 1px solid @about-border;
+  border-radius: 16px;
+
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+// Buttons ------------------------------------------------------------------
+.about__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+
+  margin-top: 34px;
+}
+
+.about__contact .about__cta {
+  justify-content: center;
+}
+
+.about__btn {
+  display: inline-block;
+
+  padding: 13px 26px;
+
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-decoration: none;
+  text-transform: uppercase;
+
+  color: @about-text;
+  border: 1px solid @about-border;
+  border-radius: 40px;
+
+  background: @about-glass-soft;
+
+  transition: transform 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s;
+}
+
+.about__btn:hover {
+  transform: translateY(-2px);
+
+  color: #fff;
+  border-color: @about-cyan;
+  box-shadow: 0 0 24px rgba(0, 216, 240, 0.35);
+}
+
+.about__btn--primary {
+  color: #04121a;
+  border-color: transparent;
+  background: linear-gradient(120deg, @about-cyan, @about-magenta);
+}
+
+.about__btn--primary:hover {
+  color: #04121a;
+  box-shadow: 0 0 34px rgba(196, 75, 255, 0.45);
+}
+
+// Hero ---------------------------------------------------------------------
+.about__hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  min-height: 100vh;
+
+  text-align: center;
+}
+
+.about__hero .about__cta {
+  justify-content: center;
+}
+
+.about__eyebrow {
+  margin: 0 0 18px;
+
+  font-size: 15px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: @about-muted;
+}
+
+.about__code {
+  color: @about-cyan;
+  font-family: 'Courier New', monospace;
+}
+
+.about__name {
+  font-size: 72px;
+  font-weight: 100;
+  line-height: 1.02;
+
+  margin: 0;
+
+  letter-spacing: 14px;
+  text-align: center;
+  color: #fff;
+
+  text-shadow: 0 0 40px rgba(0, 216, 240, 0.25);
+}
+
+.about__role {
+  margin: 22px 0 6px;
+
+  font-size: 22px;
+  letter-spacing: 4px;
+  color: @about-text;
+}
+
+.about__meta {
+  margin: 0;
+
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: @about-muted;
+}
+
+// Stats --------------------------------------------------------------------
+.about__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.about__stat {
+  flex: 1 1 180px;
+
+  padding: 30px 20px;
+
+  text-align: center;
+
+  .about-glass();
+}
+
+.about__stat__num {
+  display: block;
+
+  font-family: Futura, 'Trebuchet MS', Arial, sans-serif;
+  font-size: 46px;
+  font-weight: 100;
+
+  background: linear-gradient(120deg, @about-cyan, @about-magenta);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.about__stat__label {
+  display: block;
+
+  margin-top: 8px;
+
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: @about-muted;
+}
+
+// Skills -------------------------------------------------------------------
+.about__skillgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 22px;
+}
+
+.about__skillcol {
+  padding: 26px;
+
+  .about-glass();
+}
+
+.about__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.about__chips li {
+  padding: 6px 13px;
+
+  font-size: 13px;
+  letter-spacing: 1px;
+  line-height: 1.4;
+
+  color: @about-text;
+  border: 1px solid @about-border;
+  border-radius: 30px;
+  background: rgba(0, 216, 240, 0.06);
+}
+
+// Services -----------------------------------------------------------------
+.about__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 22px;
+}
+
+.about__service {
+  padding: 30px;
+
+  .about-glass();
+
+  transition: transform 0.3s, border-color 0.3s;
+}
+
+.about__service:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 216, 240, 0.4);
+}
+
+.about__service p {
+  margin: 0;
+
+  font-size: 15px;
+  line-height: 25px;
+  color: @about-muted;
+}
+
+// Portfolio ----------------------------------------------------------------
+.about__projects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 26px;
+}
+
+.about__project {
+  overflow: hidden;
+
+  .about-glass();
+
+  transition: transform 0.35s, box-shadow 0.35s, border-color 0.35s;
+}
+
+.about__project:hover {
+  transform: translateY(-6px);
+  border-color: rgba(196, 75, 255, 0.45);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(196, 75, 255, 0.18);
+}
+
+.about__project__media {
+  display: block;
+  overflow: hidden;
+
+  aspect-ratio: 16 / 10;
+}
+
+.about__project__media img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  transition: transform 0.5s;
+}
+
+.about__project:hover .about__project__media img {
+  transform: scale(1.06);
+}
+
+.about__project__body {
+  padding: 24px 24px 28px;
+}
+
+.about__project__title {
+  font-family: Futura, 'Trebuchet MS', Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 100;
+
+  margin: 0 0 12px;
+
+  letter-spacing: 2px;
+  color: #fff;
+}
+
+.about__project__body p {
+  margin: 0 0 12px;
+
+  font-size: 15px;
+  line-height: 24px;
+  color: @about-muted;
+}
+
+.about__project__tech {
+  font-size: 12px !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: @about-cyan !important;
+}
+
+.about__link {
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-decoration: none;
+
+  color: @about-text;
+
+  transition: color 0.3s;
+}
+
+.about__link:hover {
+  color: @about-cyan;
+}
+
+// Testimonials -------------------------------------------------------------
+.about__quotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 22px;
+}
+
+.about__quote {
+  margin: 0;
+  padding: 30px;
+
+  .about-glass();
+}
+
+.about__quote p {
+  margin: 0 0 22px;
+
+  font-size: 17px;
+  line-height: 28px;
+  color: @about-text;
+}
+
+.about__quote footer strong {
+  display: block;
+
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: #fff;
+}
+
+.about__quote footer span {
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: @about-muted;
+}
+
+// Awards -------------------------------------------------------------------
+.about__award {
+  margin-bottom: 22px;
+  padding: 30px;
+
+  .about-glass();
+}
+
+.about__award--feature {
+  border-color: rgba(196, 75, 255, 0.35);
+}
+
+.about__award__title {
+  font-size: 18px;
+  font-style: italic;
+  line-height: 28px;
+  color: @about-text;
+
+  margin: 0 0 10px;
+}
+
+.about__award p {
+  color: @about-muted;
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.about__awards__sub {
+  margin-top: 50px;
+  margin-bottom: 22px;
+
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: @about-muted;
+}
+
+.about__gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.about__cert {
+  margin: 0;
+
+  overflow: hidden;
+
+  .about-glass();
+
+  transition: transform 0.3s, border-color 0.3s;
+}
+
+.about__cert:hover {
+  transform: translateY(-3px);
+  border-color: rgba(0, 216, 240, 0.4);
+}
+
+.about__cert a {
+  display: block;
+
+  cursor: zoom-in;
+}
+
+.about__cert img {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  background: #fff;
+}
+
+.about__cert figcaption {
+  padding: 12px;
+
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-align: center;
+  color: @about-muted;
+}
+
+// Contact ------------------------------------------------------------------
+.about__contact {
+  text-align: center;
+
+  padding-bottom: 200px !important;
+}
+
+.about__contact .about__h2 {
+  font-family: Futura, 'Trebuchet MS', Arial, sans-serif;
+  font-size: 34px;
+  letter-spacing: 4px;
+  text-transform: none;
+  color: #fff;
+}
+
+.about__email {
+  display: inline-block;
+
+  margin: 10px 0 8px;
+
+  font-size: 26px;
+  letter-spacing: 2px;
+  text-decoration: none;
+
+  color: @about-cyan;
+
+  transition: color 0.3s, text-shadow 0.3s;
+}
+
+.about__email:hover {
+  color: #fff;
+  text-shadow: 0 0 24px rgba(0, 216, 240, 0.6);
+}
+
+.about__copyright {
+  margin-top: 50px;
+
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: @about-muted;
+}
+
+// Responsive ---------------------------------------------------------------
+@media screen and (max-width: 720px) {
+  .about .tails__section {
+    padding: 70px 24px;
+  }
+
+  .about__name {
+    font-size: 40px;
+    letter-spacing: 7px;
+  }
+
+  .about__role {
+    font-size: 18px;
+  }
+
+  .about__lead {
+    font-size: 18px;
+    line-height: 30px;
+  }
+}
+
+// Respect reduced-motion: kill the decorative transitions/hover shifts.
+@media (prefers-reduced-motion: reduce) {
+  .about__btn,
+  .about__service,
+  .about__project,
+  .about__project__media img,
+  .about__cert {
+    transition: none;
+  }
+
+  .about__btn:hover,
+  .about__service:hover,
+  .about__project:hover,
+  .about__cert:hover {
+    transform: none;
+  }
+
+  .about__project:hover .about__project__media img {
+    transform: none;
+  }
+}
