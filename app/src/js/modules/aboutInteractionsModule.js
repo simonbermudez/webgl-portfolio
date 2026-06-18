@@ -188,17 +188,27 @@ var ABOUT_FX = (function () {
       var name = document.querySelector('.about__name');
       if (!name || name.getAttribute('data-split')) { return; }
 
-      var text = name.textContent;
+      var text = name.textContent.trim();
       name.setAttribute('data-split', '1');
       name.setAttribute('aria-label', text);
       name.textContent = '';
 
-      for (var i = 0; i < text.length; i++) {
-        var span = document.createElement('span');
-        span.className = 'about__name__char';
-        span.setAttribute('aria-hidden', 'true');
-        span.textContent = text[i] === ' ' ? ' ' : text[i];
-        name.appendChild(span);
+      // Each word becomes its own (block-level) line; chars animate within.
+      var words = text.split(/\s+/);
+      for (var w = 0; w < words.length; w++) {
+        var wordEl = document.createElement('span');
+        wordEl.className = 'about__name__word';
+        var word = words[w];
+
+        for (var i = 0; i < word.length; i++) {
+          var span = document.createElement('span');
+          span.className = 'about__name__char';
+          span.setAttribute('aria-hidden', 'true');
+          span.textContent = word[i];
+          wordEl.appendChild(span);
+        }
+
+        name.appendChild(wordEl);
       }
     }
 

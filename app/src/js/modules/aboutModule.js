@@ -31,16 +31,18 @@ var IMG_BASE = './app/public/img/about/';
 
 // Project screenshots shown as floating cards in the backdrop, in display order.
 var PROJECTS = [
-  'plexus.png',
+  'nasa.png',
+  'qualifacts.png',
   'renderify.jpg',
-  'codesign.jpg',
   'zeitdice.jpg',
   'chess.jpg',
-  'youtube-transcriptor.png',
   'dijkstras.png',
   'dijkstras-maze.png',
   'michael-owen.jpg'
 ];
+
+// Screenshots that are already dark — don't invert these for dark mode.
+var DARK_PROJECTS = ['nasa.png', 'qualifacts.png'];
 
 var BG_VERTEX = [
   'varying vec2 vUv;',
@@ -296,20 +298,39 @@ var ABOUT = (function () {
         cards.push({ holder: holder, mesh: card });
 
         loader.load(IMG_BASE + file, function (tex) {
-          tex.minFilter = THREE.LinearFilter;
-          tex.generateMipmaps = false;
-          material.map = tex;
-          material.color.set('#ffffff');
-          material.needsUpdate = true;
-
-          // Match the plane aspect to the image so screenshots aren't squashed.
           var img = tex.image;
+          var map = tex;
+
+          // Dark-mode the screenshot: redraw it inverted so the floating cards
+          // match the dark theme instead of glowing as bright white panels.
+          // Images that are already dark are left as-is.
           if (img && img.width && img.height) {
+            if (DARK_PROJECTS.indexOf(file) === -1) {
+              try {
+                var canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                var ctx = canvas.getContext('2d');
+                ctx.filter = 'invert(1) hue-rotate(180deg)';
+                ctx.drawImage(img, 0, 0);
+                map = new THREE.CanvasTexture(canvas);
+              } catch (e) {
+                map = tex;
+              }
+            }
+
+            // Match the plane aspect to the image so screenshots aren't squashed.
             var aspect = img.width / img.height;
             var h = 10;
             var w = h * aspect;
             card.scale.set(w / 16, h / 10, 1);
           }
+
+          map.minFilter = THREE.LinearFilter;
+          map.generateMipmaps = false;
+          material.map = map;
+          material.color.set('#ffffff');
+          material.needsUpdate = true;
         });
       });
     }
