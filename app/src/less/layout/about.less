@@ -1,0 +1,757 @@
+//
+// ABOUT / PORTFOLIO panel (the `.tails` view).
+//
+// Styled to match the presentation (the "heads" experience): monochrome
+// white-on-black, thin Futura headings, wide letter-spacing, hairline rules.
+// Crisp, accessible DOM content composited over a live three.js backdrop
+// (see app/src/js/modules/aboutModule.js); the interaction layer lives in
+// app/src/js/modules/aboutInteractionsModule.js.
+//
+
+@about-bg:        #0a0a0a;
+@about-text:      #ffffff;
+@about-muted:     rgba(255, 255, 255, 0.5);
+@about-faint:     rgba(255, 255, 255, 0.32);
+@about-line:      rgba(255, 255, 255, 0.14);
+@about-line-hot:  rgba(255, 255, 255, 0.55);
+@about-surface:   rgba(255, 255, 255, 0.03);
+
+@about-futura: Futura, 'Trebuchet MS', Arial, sans-serif;
+
+// The tails panel itself ---------------------------------------------------
+.tails.about {
+  background-color: @about-bg;
+  color: @about-text;
+
+  -webkit-overflow-scrolling: touch;
+}
+
+// Hide the native cursor when the custom one is active.
+.tails.about.has-cursor,
+.tails.about.has-cursor * {
+  cursor: none !important;
+}
+
+// Pinned WebGL backdrop: sticky inside the scroll container, pulled back up
+// with a negative margin so the content scrolls over it.
+.about__bg {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+
+  width: 100%;
+  height: 100vh;
+  margin-bottom: -100vh;
+
+  pointer-events: none;
+
+  background: @about-bg; // CSS fallback if WebGL is unavailable
+}
+
+.about__bg canvas {
+  display: block;
+
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.about__content {
+  position: relative;
+  z-index: 1;
+}
+
+// Custom cursor ------------------------------------------------------------
+.about__cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+
+  width: 34px;
+  height: 34px;
+
+  pointer-events: none;
+
+  border: 1px solid #fff;
+  border-radius: 50%;
+
+  mix-blend-mode: difference;
+
+  transition: width 0.3s, height 0.3s, background-color 0.3s;
+}
+
+.about__cursor.is-active {
+  width: 58px;
+  height: 58px;
+
+  background-color: #fff;
+}
+
+// Section scaffold ---------------------------------------------------------
+.about .tails__section {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 110px 44px;
+
+  text-align: left;
+}
+
+.about__h2 {
+  font-family: @about-futura;
+  font-size: 13px;
+  font-weight: 400;
+
+  margin: 0 0 50px;
+
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: @about-text;
+}
+
+// Hairline rule under section labels, like the presentation's thin lines.
+.about__h2:after {
+  content: '';
+
+  display: block;
+
+  width: 60px;
+  height: 1px;
+  margin-top: 18px;
+
+  background: @about-line-hot;
+}
+
+.about__h3 {
+  font-family: @about-futura;
+  font-size: 18px;
+  font-weight: 100;
+
+  margin: 0 0 14px;
+
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: @about-text;
+}
+
+.about__text,
+.about__lead {
+  color: @about-muted;
+
+  font-size: 17px;
+  line-height: 30px;
+}
+
+.about__lead {
+  font-size: 21px;
+  line-height: 34px;
+  color: @about-text;
+}
+
+// Buttons ------------------------------------------------------------------
+.about__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+
+  margin-top: 40px;
+}
+
+.about__contact .about__cta {
+  justify-content: center;
+}
+
+.about__btn {
+  position: relative;
+
+  display: inline-block;
+
+  padding: 14px 30px;
+
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-decoration: none;
+  text-transform: uppercase;
+
+  color: @about-text;
+  border: 1px solid @about-line-hot;
+  border-radius: 40px;
+  background: transparent;
+
+  transition: color 0.4s, background-color 0.4s, border-color 0.4s;
+}
+
+.about__btn:hover {
+  color: @about-bg;
+  background-color: #fff;
+  border-color: #fff;
+}
+
+.about__btn--primary {
+  color: @about-bg;
+  background: #fff;
+  border-color: #fff;
+}
+
+.about__btn--primary:hover {
+  color: #fff;
+  background: transparent;
+}
+
+// Hero ---------------------------------------------------------------------
+.about__hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  min-height: 100vh;
+
+  text-align: center;
+}
+
+.about__hero .about__cta {
+  justify-content: center;
+}
+
+.about__eyebrow {
+  margin: 0 0 24px;
+
+  font-size: 14px;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: @about-muted;
+}
+
+.about__code {
+  color: @about-text;
+  font-family: 'Courier New', monospace;
+}
+
+.about__name {
+  font-family: @about-futura;
+  font-size: clamp(34px, 8vw, 82px);
+  font-weight: 100;
+  line-height: 1.05;
+
+  margin: 0;
+
+  letter-spacing: clamp(5px, 1.4vw, 18px);
+  text-align: center;
+  color: #fff;
+}
+
+// "SIMON" and "BERMUDEZ" each get their own line.
+.about__name__word {
+  display: block;
+}
+
+.about__name__char {
+  display: inline-block;
+
+  white-space: pre;
+  will-change: transform;
+}
+
+.about__role {
+  margin: 28px 0 8px;
+
+  font-size: 20px;
+  font-weight: 100;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: @about-text;
+}
+
+.about__meta {
+  margin: 0;
+
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: @about-muted;
+}
+
+// Stats --------------------------------------------------------------------
+.about__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.about__stat {
+  flex: 1 1 180px;
+
+  padding: 30px 20px;
+
+  text-align: center;
+
+  border-left: 1px solid @about-line;
+}
+
+.about__stat:first-child {
+  border-left: 0;
+}
+
+.about__stat__num {
+  display: block;
+
+  font-family: @about-futura;
+  font-size: 58px;
+  font-weight: 100;
+
+  color: #fff;
+}
+
+.about__stat__label {
+  display: block;
+
+  margin-top: 10px;
+
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: @about-muted;
+}
+
+// Skills -------------------------------------------------------------------
+.about__skillgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1px;
+
+  background: @about-line; // grid lines show through the gaps
+  border: 1px solid @about-line;
+}
+
+.about__skillcol {
+  padding: 30px;
+
+  background: @about-bg;
+}
+
+.about__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.about__chips li {
+  padding: 6px 14px;
+
+  font-size: 12px;
+  letter-spacing: 1px;
+  line-height: 1.4;
+
+  color: @about-muted;
+  border: 1px solid @about-line;
+  border-radius: 30px;
+}
+
+// Services -----------------------------------------------------------------
+.about__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.about__service {
+  padding: 34px;
+
+  border: 1px solid @about-line;
+  background: @about-surface;
+
+  transition: border-color 0.4s, background-color 0.4s;
+}
+
+.about__service:hover {
+  border-color: @about-line-hot;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.about__service p {
+  margin: 0;
+
+  font-size: 15px;
+  line-height: 25px;
+  color: @about-muted;
+}
+
+// Portfolio ----------------------------------------------------------------
+.about__projects {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.about__project {
+  overflow: hidden;
+
+  border: 1px solid @about-line;
+  background: @about-surface;
+
+  // Transform is owned by gsap (tilt); animate only colour/shadow here.
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+
+// Featured card spans the whole grid and goes side-by-side on wide screens.
+.about__project--featured {
+  grid-column: 1 / -1;
+
+  border-color: @about-line-hot;
+}
+
+.about__featured-tag {
+  display: inline-block;
+
+  margin-bottom: 18px;
+  padding: 5px 13px;
+
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+
+  color: @about-bg;
+  background: #fff;
+  border-radius: 30px;
+}
+
+@media screen and (min-width: 760px) {
+  .about__project--featured {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .about__project--featured .about__project__media {
+    flex: 1 1 58%;
+
+    aspect-ratio: auto;
+    min-height: 360px;
+  }
+
+  .about__project--featured .about__project__body {
+    display: flex;
+    flex: 1 1 42%;
+    flex-direction: column;
+    justify-content: center;
+
+    padding: 48px;
+  }
+
+  .about__project--featured .about__project__title {
+    font-size: 32px;
+  }
+
+  .about__project--featured .about__project__body p {
+    font-size: 16px;
+    line-height: 27px;
+  }
+}
+
+.about__project:hover {
+  border-color: @about-line-hot;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.about__project__media {
+  display: block;
+  overflow: hidden;
+
+  aspect-ratio: 16 / 10;
+}
+
+.about__project__media img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+
+  // Dark-mode the screenshots by default; reveal true colours on hover.
+  filter: invert(1) hue-rotate(180deg);
+
+  transition: transform 0.6s, filter 0.6s;
+}
+
+.about__project:hover .about__project__media img {
+  transform: scale(1.06);
+
+  filter: none;
+}
+
+// Screenshots that are already dark shouldn't be inverted.
+.about__project__media--keep img {
+  filter: none;
+}
+
+.about__project__body {
+  padding: 26px 26px 30px;
+}
+
+.about__project__title {
+  font-family: @about-futura;
+  font-size: 22px;
+  font-weight: 100;
+
+  margin: 0 0 12px;
+
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.about__project__body p {
+  margin: 0 0 12px;
+
+  font-size: 15px;
+  line-height: 24px;
+  color: @about-muted;
+}
+
+.about__project__tech {
+  font-size: 11px !important;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: @about-faint !important;
+}
+
+.about__link {
+  display: inline-block;
+
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+
+  color: @about-text;
+
+  transition: letter-spacing 0.3s, opacity 0.3s;
+}
+
+.about__link:hover {
+  letter-spacing: 4px;
+  opacity: 0.7;
+}
+
+// Testimonials -------------------------------------------------------------
+.about__quotes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.about__quote {
+  margin: 0;
+  padding: 34px;
+
+  border: 1px solid @about-line;
+  background: @about-surface;
+}
+
+.about__quote p {
+  margin: 0 0 24px;
+
+  font-size: 17px;
+  line-height: 28px;
+  color: @about-text;
+}
+
+.about__quote footer strong {
+  display: block;
+
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: #fff;
+}
+
+.about__quote footer span {
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: @about-muted;
+}
+
+// Awards -------------------------------------------------------------------
+.about__award {
+  margin-bottom: 20px;
+  padding: 34px;
+
+  border: 1px solid @about-line;
+  background: @about-surface;
+}
+
+.about__award--feature {
+  border-color: @about-line-hot;
+}
+
+.about__award__title {
+  font-size: 18px;
+  font-style: italic;
+  line-height: 28px;
+  color: @about-text;
+
+  margin: 0 0 10px;
+}
+
+.about__award p {
+  color: @about-muted;
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.about__awards__sub {
+  margin-top: 56px;
+  margin-bottom: 24px;
+
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: @about-muted;
+}
+
+.about__gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.about__cert {
+  margin: 0;
+
+  overflow: hidden;
+
+  border: 1px solid @about-line;
+  background: @about-surface;
+
+  transition: border-color 0.3s;
+}
+
+.about__cert:hover {
+  border-color: @about-line-hot;
+}
+
+.about__cert a {
+  display: block;
+
+  cursor: zoom-in;
+}
+
+.about__cert img {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  // Scanned docs are black-on-white — invert to white-on-black for dark mode.
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.about__cert figcaption {
+  padding: 12px;
+
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+  color: @about-muted;
+}
+
+// Contact ------------------------------------------------------------------
+.about__contact {
+  text-align: center;
+
+  padding-bottom: 200px !important;
+}
+
+.about__contact .about__h2 {
+  font-size: 38px;
+  font-weight: 100;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.about__contact .about__h2:after {
+  margin: 22px auto 0;
+}
+
+.about__email {
+  display: inline-block;
+
+  margin: 12px 0 8px;
+
+  font-size: 26px;
+  letter-spacing: 2px;
+  text-decoration: none;
+
+  color: @about-text;
+
+  transition: letter-spacing 0.3s, opacity 0.3s;
+}
+
+.about__email:hover {
+  letter-spacing: 4px;
+  opacity: 0.7;
+}
+
+.about__copyright {
+  margin-top: 56px;
+
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: @about-faint;
+}
+
+// Responsive ---------------------------------------------------------------
+@media screen and (max-width: 720px) {
+  .about .tails__section {
+    padding: 80px 24px;
+  }
+
+  .about__role {
+    font-size: 16px;
+  }
+
+  .about__lead {
+    font-size: 18px;
+    line-height: 30px;
+  }
+
+  .about__stat {
+    flex-basis: 50%;
+  }
+
+  .about__stat__num {
+    font-size: 44px;
+  }
+}
+
+// Respect reduced-motion: kill the decorative transitions/hover shifts.
+@media (prefers-reduced-motion: reduce) {
+  .about__btn,
+  .about__service,
+  .about__project,
+  .about__project__media img,
+  .about__cert,
+  .about__link,
+  .about__email {
+    transition: none;
+  }
+
+  .about__project:hover .about__project__media img {
+    transform: none;
+  }
+
+  .about__link:hover,
+  .about__email:hover {
+    letter-spacing: inherit;
+  }
+}

@@ -381,8 +381,289 @@
       </div>
     </div>
 
-    <div class="tails" style="overflow-y:hidden;height: 100vh;">
-      <iframe style="border:black; width:100%; height:100vh" src="wp" title="About Simon Bermudez"></iframe>
+    <div class="tails about">
+      <!-- Live three.js backdrop (aboutModule mounts its canvas here) -->
+      <div class="about__bg" aria-hidden="true"></div>
+
+      <main class="about__content" id="main-content">
+
+        <!-- HERO -->
+        <section class="tails__section about__hero" aria-labelledby="about-name">
+          <p class="about__eyebrow tails__section__el"><span class="about__code">&lt;/&gt;</span> I build <span class="about__code">&lt;/&gt;</span></p>
+          <h1 id="about-name" class="about__name">SIMON BERMUDEZ</h1>
+          <p class="about__role tails__section__el">Creative Technologist &middot; Software Architect</p>
+          <p class="about__meta tails__section__el">Toronto, Canada &nbsp;&bull;&nbsp; English / Spanish &nbsp;&bull;&nbsp; 11+ years building software</p>
+          <div class="about__cta tails__section__el">
+            <a class="about__btn about__btn--primary" href="https://docs.google.com/document/d/1lnzOdCqcqq-CdyQAy-avOWt560XXlrrOxjScahsQXAA" target="_blank" rel="noopener">Resume</a>
+            <a class="about__btn" href="https://simonbermudez.com/calendar" target="_blank" rel="noopener">Book a Call</a>
+            <a class="about__btn" href="https://github.com/simonbermudez" target="_blank" rel="noopener">GitHub</a>
+            <a class="about__btn" href="https://linkedin.com/in/simonbermudez" target="_blank" rel="noopener">LinkedIn</a>
+          </div>
+        </section>
+
+        <!-- STATS -->
+        <section class="tails__section about__stats" aria-label="Career statistics">
+          <div class="about__stat tails__section__el"><span class="about__stat__num">11+</span><span class="about__stat__label">Years Experience</span></div>
+          <div class="about__stat tails__section__el"><span class="about__stat__num">100+</span><span class="about__stat__label">Completed Projects</span></div>
+          <div class="about__stat tails__section__el"><span class="about__stat__num">100+</span><span class="about__stat__label">Happy Customers</span></div>
+          <div class="about__stat tails__section__el"><span class="about__stat__num">10+</span><span class="about__stat__label">Honors &amp; Awards</span></div>
+        </section>
+
+        <!-- ABOUT -->
+        <section class="tails__section about__bio" aria-labelledby="about-heading">
+          <h2 id="about-heading" class="about__h2 tails__section__el">About</h2>
+          <p class="about__lead tails__section__el">
+            I'm a Venezuelan-born creative technologist and software architect based in Toronto. I design and ship
+            full-stack products end to end &mdash; from the data model to the pixels.
+          </p>
+          <p class="about__text tails__section__el">
+            After relocating to Canada I exited a startup in 2020 to join a quantum-computing firm, built and
+            scaled SaaS platforms, collaborated on healthcare EHR systems, and grew a real-estate portfolio of
+            38 properties. When I'm not shipping code you'll find me producing music or building things at hackathons.
+          </p>
+        </section>
+
+        <!-- SKILLS -->
+        <section class="tails__section about__skills" aria-labelledby="skills-heading">
+          <h2 id="skills-heading" class="about__h2 tails__section__el">Skills</h2>
+          <div class="about__skillgrid">
+            <div class="about__skillcol tails__section__el">
+              <h3 class="about__h3">Frontend</h3>
+              <ul class="about__chips">
+                <li>React</li><li>Redux</li><li>VueJS</li><li>Express</li><li>jQuery</li><li>HTML5</li><li>CSS3</li><li>Bootstrap</li><li>Materialize</li>
+              </ul>
+            </div>
+            <div class="about__skillcol tails__section__el">
+              <h3 class="about__h3">Backend</h3>
+              <ul class="about__chips">
+                <li>Django</li><li>Flask</li><li>Ruby on Rails</li><li>ASP.NET Core</li><li>Node</li><li>PHP</li><li>AWS Lambda</li>
+              </ul>
+            </div>
+            <div class="about__skillcol tails__section__el">
+              <h3 class="about__h3">Databases</h3>
+              <ul class="about__chips">
+                <li>PostgreSQL</li><li>MySQL</li><li>MongoDB</li><li>Redis</li><li>Firebase</li><li>MS Access</li>
+              </ul>
+            </div>
+            <div class="about__skillcol tails__section__el">
+              <h3 class="about__h3">AI &amp; ML</h3>
+              <ul class="about__chips">
+                <li>TensorFlow</li><li>Keras</li><li>TFLite</li><li>OpenCV</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- SERVICES -->
+        <section class="tails__section about__services" aria-labelledby="services-heading">
+          <h2 id="services-heading" class="about__h2 tails__section__el">What I Do</h2>
+          <div class="about__cards">
+            <article class="about__service tails__section__el">
+              <h3 class="about__h3">Back-End Development</h3>
+              <p>Architecting robust APIs and services with Python, Ruby on Rails, PHP, AWS Lambda and ASP.NET Core.</p>
+            </article>
+            <article class="about__service tails__section__el">
+              <h3 class="about__h3">Front-End Development</h3>
+              <p>Building responsive, interactive UIs with React, Redux, Express, VueJS, jQuery, Bootstrap and Materialize.</p>
+            </article>
+            <article class="about__service tails__section__el">
+              <h3 class="about__h3">Sound Design</h3>
+              <p>Composing and producing original music and audio for products and creative projects.</p>
+            </article>
+            <article class="about__service tails__section__el">
+              <h3 class="about__h3">Graphic Design</h3>
+              <p>Visual design across Photoshop, Illustrator, After Effects, Cinema4D and Blender.</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- PORTFOLIO -->
+        <section class="tails__section about__portfolio" aria-labelledby="portfolio-heading">
+          <h2 id="portfolio-heading" class="about__h2 tails__section__el">Selected Work</h2>
+          <div class="about__projects">
+
+            <article class="about__project about__project--featured tails__section__el">
+              <a class="about__project__media about__project__media--keep" href="https://nasa.siber.live" target="_blank" rel="noopener">
+                <img loading="lazy" src="./app/public/img/about/nasa.png" alt="Cosmic Symphony — NASA Space Apps project screenshot">
+              </a>
+              <div class="about__project__body">
+                <span class="about__featured-tag">Featured</span>
+                <h3 class="about__project__title">Cosmic Symphony</h3>
+                <p>A NASA Space Apps Challenge project that turns James Webb Space Telescope imagery into music and motion &mdash; an interactive, multisensory way to explore the cosmos.</p>
+                <p class="about__project__tech">NASA Space Apps &middot; Web Audio &middot; Data Sonification</p>
+                <a class="about__link" href="https://nasa.siber.live" target="_blank" rel="noopener">nasa.siber.live &rarr;</a>
+              </div>
+            </article>
+
+            <article class="about__project tails__section__el">
+              <a class="about__project__media about__project__media--keep" href="https://qualifacts.com" target="_blank" rel="noopener">
+                <img loading="lazy" src="./app/public/img/about/qualifacts.png" alt="Qualifacts behavioral health EHR platform screenshot">
+              </a>
+              <div class="about__project__body">
+                <h3 class="about__project__title">Qualifacts</h3>
+                <p>AI-powered EHR and data platform for behavioral health &mdash; clinical documentation, care management, billing and analytics, serving 2,200+ agencies.</p>
+                <p class="about__project__tech">EHR &middot; Healthcare &middot; APIs &middot; Analytics</p>
+                <a class="about__link" href="https://qualifacts.com" target="_blank" rel="noopener">qualifacts.com &rarr;</a>
+              </div>
+            </article>
+
+            <article class="about__project tails__section__el">
+              <a class="about__project__media" href="https://renderify.io" target="_blank" rel="noopener">
+                <img loading="lazy" src="./app/public/img/about/renderify.jpg" alt="Renderify platform screenshot">
+              </a>
+              <div class="about__project__body">
+                <h3 class="about__project__title">Renderify</h3>
+                <p>Affordable cloud platform for personalized, dynamic video rendering &mdash; individualized content delivered at scale.</p>
+                <p class="about__project__tech">React &middot; Redux &middot; Express</p>
+                <a class="about__link" href="https://renderify.io" target="_blank" rel="noopener">renderify.io &rarr;</a>
+              </div>
+            </article>
+
+<article class="about__project tails__section__el">
+              <a class="about__project__media" href="https://zeitdice.com" target="_blank" rel="noopener">
+                <img loading="lazy" src="./app/public/img/about/zeitdice.jpg" alt="ZEITDice smart camera screenshot">
+              </a>
+              <div class="about__project__body">
+                <h3 class="about__project__title">ZEITDice</h3>
+                <p>Custom smart-camera company. I maintained and expanded the cloud platform and built computer-vision features: quality filtering, privacy-blurring facial recognition, and object detection.</p>
+                <p class="about__project__tech">Ruby on Rails &middot; Python &middot; TensorFlow &middot; OpenCV</p>
+                <a class="about__link" href="https://zeitdice.com" target="_blank" rel="noopener">zeitdice.com &rarr;</a>
+              </div>
+            </article>
+
+            <article class="about__project tails__section__el">
+              <a class="about__project__media" href="https://simonbermudez.com/chess" target="_blank" rel="noopener">
+                <img loading="lazy" src="./app/public/img/about/chess.jpg" alt="GPGPU Chess visualization screenshot">
+              </a>
+              <div class="about__project__body">
+                <h3 class="about__project__title">GPGPU Chess</h3>
+                <p>An interactive artwork: an AI chess engine that visualizes its thinking with light ripples and curve networks. Classic 1950s algorithms (alpha-beta, quiescence) with no opening book &mdash; transparency over strength.</p>
+                <p class="about__project__tech">JavaScript &middot; SynapseGL</p>
+                <a class="about__link" href="https://simonbermudez.com/chess" target="_blank" rel="noopener">View project &rarr;</a>
+              </div>
+            </article>
+
+<article class="about__project tails__section__el">
+              <a class="about__project__media" href="https://simonbermudez.com/DijkstraSolver" target="_blank" rel="noopener">
+                <img loading="lazy" src="./app/public/img/about/dijkstras.png" alt="Dijkstra's Solver visualization screenshot">
+              </a>
+              <div class="about__project__body">
+                <h3 class="about__project__title">Dijkstra's Solver</h3>
+                <p>Visualizes the shortest path to any node of a graph with Dijkstra's algorithm, plus breadth-first and depth-first search.</p>
+                <p class="about__project__tech">D3.js &middot; JavaScript &middot; HTML5</p>
+                <a class="about__link" href="https://simonbermudez.com/DijkstraSolver" target="_blank" rel="noopener">View project &rarr;</a>
+              </div>
+            </article>
+
+            <article class="about__project tails__section__el">
+              <a class="about__project__media" href="https://simonbermudez.com/pathfinding/" target="_blank" rel="noopener">
+                <img loading="lazy" src="./app/public/img/about/dijkstras-maze.png" alt="Dijkstra's Maze Solver screenshot">
+              </a>
+              <div class="about__project__body">
+                <h3 class="about__project__title">Dijkstra's Maze Solver</h3>
+                <p>A 2D maze solver built to apply concepts from an Algorithms &amp; Data Structures course at George Brown College.</p>
+                <p class="about__project__tech">ReactJS</p>
+                <a class="about__link" href="https://simonbermudez.com/pathfinding/" target="_blank" rel="noopener">View project &rarr;</a>
+              </div>
+            </article>
+
+            <article class="about__project tails__section__el">
+              <a class="about__project__media" href="https://michaelowenrealestate.com/" target="_blank" rel="noopener">
+                <img loading="lazy" src="./app/public/img/about/michael-owen.jpg" alt="Michael Owen Real Estate website screenshot">
+              </a>
+              <div class="about__project__body">
+                <h3 class="about__project__title">Michael Owen Real Estate</h3>
+                <p>Full-stack Django app that automatically fetches MLS listings and lets the admin feature selected properties on the site.</p>
+                <p class="about__project__tech">Django &middot; Python &middot; HTML5</p>
+                <a class="about__link" href="https://michaelowenrealestate.com/" target="_blank" rel="noopener">michaelowenrealestate.com &rarr;</a>
+              </div>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- TESTIMONIALS -->
+        <section class="tails__section about__testimonials" aria-labelledby="testimonials-heading">
+          <h2 id="testimonials-heading" class="about__h2 tails__section__el">What People Say</h2>
+          <div class="about__quotes">
+            <blockquote class="about__quote tails__section__el">
+              <p>&ldquo;Simon is a gifted and creative technologist &mdash; always keeping in mind the customers' use cases.&rdquo;</p>
+              <footer><strong>Henning Dekant</strong><span>CEO, Artiste-qb.net</span></footer>
+            </blockquote>
+            <blockquote class="about__quote tails__section__el">
+              <p>&ldquo;Excellent communication skills, advanced technical expertise and an exceptional eagerness to learn.&rdquo;</p>
+              <footer><strong>Michael Schwanzer</strong><span>CEO, ZEITDice Inc</span></footer>
+            </blockquote>
+            <blockquote class="about__quote tails__section__el">
+              <p>&ldquo;He brings integrity and intelligence to his work.&rdquo;</p>
+              <footer><strong>Fatih Camgoz</strong><span>President, GBC Computer Programming Society</span></footer>
+            </blockquote>
+          </div>
+        </section>
+
+        <!-- AWARDS -->
+        <section class="tails__section about__awards" aria-labelledby="awards-heading">
+          <h2 id="awards-heading" class="about__h2 tails__section__el">Awards &amp; Honors</h2>
+
+          <article class="about__award about__award--feature tails__section__el">
+            <h3 class="about__h3">Patent</h3>
+            <p class="about__award__title">"System and method for platform to securely distribute compute workload to web capable devices"</p>
+            <p>Cited by Intuit, Akamai Technologies and Verizon.</p>
+            <a class="about__link" href="https://patents.google.com/?inventor=Simon+Bermudez" target="_blank" rel="noopener">Go to the patent &rarr;</a>
+          </article>
+
+          <div class="about__award tails__section__el">
+            <h3 class="about__h3">Powerful Minds &mdash; FILA Festival 2015</h3>
+            <p>Recognized at the FILA Festival in Caracas, Venezuela.</p>
+          </div>
+
+          <h3 class="about__h3 about__awards__sub tails__section__el">Dean's List &mdash; George Brown College</h3>
+          <div class="about__gallery">
+            <figure class="about__cert tails__section__el">
+              <a href="./app/public/img/about/deans-fall-2019.png" target="_blank" rel="noopener"><img loading="lazy" src="./app/public/img/about/deans-fall-2019.png" alt="Dean's List certificate, Fall 2019"></a>
+              <figcaption>Fall 2019</figcaption>
+            </figure>
+            <figure class="about__cert tails__section__el">
+              <a href="./app/public/img/about/deans-winter-2020.png" target="_blank" rel="noopener"><img loading="lazy" src="./app/public/img/about/deans-winter-2020.png" alt="Dean's List certificate, Winter 2020"></a>
+              <figcaption>Winter 2020</figcaption>
+            </figure>
+            <figure class="about__cert tails__section__el">
+              <a href="./app/public/img/about/deans-fall-2020.png" target="_blank" rel="noopener"><img loading="lazy" src="./app/public/img/about/deans-fall-2020.png" alt="Dean's List certificate, Fall 2020"></a>
+              <figcaption>Fall 2020</figcaption>
+            </figure>
+          </div>
+
+          <h3 class="about__h3 about__awards__sub tails__section__el">Academic Transcripts</h3>
+          <div class="about__gallery">
+            <figure class="about__cert tails__section__el">
+              <a href="./app/public/img/about/transcript-1.png" target="_blank" rel="noopener"><img loading="lazy" src="./app/public/img/about/transcript-1.png" alt="Academic transcript, semester 1"></a>
+              <figcaption>Semester 1</figcaption>
+            </figure>
+            <figure class="about__cert tails__section__el">
+              <a href="./app/public/img/about/transcript-2.png" target="_blank" rel="noopener"><img loading="lazy" src="./app/public/img/about/transcript-2.png" alt="Academic transcript, semester 2"></a>
+              <figcaption>Semester 2</figcaption>
+            </figure>
+            <figure class="about__cert tails__section__el">
+              <a href="./app/public/img/about/transcript-3.png" target="_blank" rel="noopener"><img loading="lazy" src="./app/public/img/about/transcript-3.png" alt="Academic transcript, semester 3"></a>
+              <figcaption>Semester 3</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <!-- CONTACT -->
+        <section class="tails__section about__contact" aria-labelledby="contact-heading">
+          <h2 id="contact-heading" class="about__h2 tails__section__el">Let's build something</h2>
+          <a class="about__email tails__section__el" href="mailto:iam@simonbermudez.com">iam@simonbermudez.com</a>
+          <div class="about__cta tails__section__el">
+            <a class="about__btn" href="https://github.com/simonbermudez" target="_blank" rel="noopener">GitHub</a>
+            <a class="about__btn" href="https://linkedin.com/in/simonbermudez" target="_blank" rel="noopener">LinkedIn</a>
+            <a class="about__btn" href="https://rei.simonbermudez.com" target="_blank" rel="noopener">Real Estate</a>
+            <a class="about__btn" href="https://simonbermudez.com/calendar" target="_blank" rel="noopener">Book a Call</a>
+          </div>
+          <p class="about__copyright tails__section__el">&copy; 2025 Simon Bermudez &mdash; All Rights Reserved</p>
+        </section>
+
+      </main>
     </div>
 
     <div class="trigger"></div>

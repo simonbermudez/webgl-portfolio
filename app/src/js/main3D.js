@@ -24,6 +24,8 @@ import APP from './modules/appModule.js';
 import SCENE from './modules/sceneModule.js';
 import SOUNDS from './modules/soundsModule.js';
 import HASH from './modules/hashModule.js';
+import ABOUT from './modules/aboutModule.js';
+import ABOUT_FX from './modules/aboutInteractionsModule.js';
 
 import ImagesLoader from './classes/LoaderClass.js';
 
@@ -409,6 +411,9 @@ jQuery(function () {
   // tails
   var wireframe = new Wireframe(jQuery('.wireframe'));
 
+  var $tails = jQuery('.tails');
+  var $aboutBg = jQuery('.about__bg');
+
   var $tailsSections = jQuery('.tails__section');
   $tailsSections.find('.tails__section__el').animate({ opacity: 0, y: 100 }, 0);
 
@@ -443,14 +448,19 @@ jQuery(function () {
   APP.on('slideBegin', function () {
     if (this.to === 'heads') {
       waypoint.stop();
+      ABOUT.stop();
+      ABOUT_FX.stop();
 
       try {
-        SOUNDS.background.fadeIn(1, 2000);  
+        SOUNDS.background.fadeIn(1, 2000);
       } catch (e) {
         console.warn(e);
       }
-      
+
     } else {
+      // Spin up the about/portfolio backdrop + interactions as it slides in.
+      ABOUT.start($aboutBg, $tails);
+      ABOUT_FX.start($tails);
       SOUNDS.background.fadeOut(0, 2000);
     }
   });
