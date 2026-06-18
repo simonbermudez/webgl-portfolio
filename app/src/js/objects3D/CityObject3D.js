@@ -11,7 +11,10 @@ function City () {
   this.el = new THREE.Object3D();
 
   this.groups = {};
-  this.baseMaterial = new THREE.MeshLambertMaterial({ color: '#333333' });
+  // flatShading restores the faceted look of the buildings: the legacy loader
+  // welds vertices and computes smooth normals (needed for the outline's dilate),
+  // which would otherwise blur the boxy faces into a flat grey mass.
+  this.baseMaterial = new THREE.MeshLambertMaterial({ color: '#333333', flatShading: true });
 }
 
 City.prototype.addGroup = function (data) {

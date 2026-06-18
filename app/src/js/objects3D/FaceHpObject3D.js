@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { TweenLite } from 'gsap';
 
 import yoyo from '../utils/yoyoUtil.js';
-import loadLegacyModel from '../utils/legacyModelUtil.js';
+import loadGltfGeometry from '../utils/gltfModelUtil.js';
 
 import matCap from '../materials/matCapMaterial.js';
 matCap.uniforms.map.value = new THREE.TextureLoader().load('./app/public/img/matCap-shiny.jpg');
@@ -19,7 +19,7 @@ matCap.uniforms.map.value = new THREE.TextureLoader().load('./app/public/img/mat
 function Face () {
   var group = new THREE.Object3D();
 
-  loadLegacyModel('./app/public/3D/face-hp.js', function (geometry) {
+  loadGltfGeometry('./app/public/3D/face-hp.glb', function (geometry) {
     var mesh = new THREE.Mesh(geometry, matCap);
     mesh.scale.x = 1.5;
     mesh.scale.y = 1.5;

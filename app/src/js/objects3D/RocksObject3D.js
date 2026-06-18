@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { TweenLite } from 'gsap';
 
 import yoyo from '../utils/yoyoUtil.js';
-import loadLegacyModel from '../utils/legacyModelUtil.js';
+import loadGltfGeometry from '../utils/gltfModelUtil.js';
 
 /**
  * 3D Rocks
@@ -32,7 +32,7 @@ function Rocks () {
   var fromColor = new THREE.Color('#0a0a0a');
   var toColor = new THREE.Color('#ffffff');
 
-  loadLegacyModel('./app/public/3D/rocks.js', function (geometry) {
+  loadGltfGeometry('./app/public/3D/rocks.glb', function (geometry) {
     var rocks = new THREE.Mesh(geometry, rocksMaterial);
     rocks.position.set(-70, 0, -30);
     group.add(rocks);
@@ -111,7 +111,9 @@ Rocks.prototype.getSphere = function () {
  * @return {THREE.Light}
  */
 Rocks.prototype.getLight = function () {
-  var light = new THREE.PointLight('#ffffff', 0, 50);
+  // decay 1 matches r68's PointLight falloff; the r155+ physically-correct
+  // default of 2 makes the rocks render too dark.
+  var light = new THREE.PointLight('#ffffff', 0, 50, 1);
   light.position.set(0, 11, -40);
 
   return light;
