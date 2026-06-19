@@ -3,6 +3,7 @@
 import jQuery from 'jquery';
 import * as THREE from 'three';
 import { Timer } from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
 import random from '../utils/randomUtil.js';
 
@@ -28,6 +29,11 @@ import random from '../utils/randomUtil.js';
  */
 
 var IMG_BASE = './app/public/img/about/';
+
+// "SB" monogram logo (extruded SVG from Blender) parked at the centre of the
+// project ring. Vendored locally so it loads same-origin (no CORS / runtime
+// network dependency) and is copied verbatim into the build by Vite.
+var LOGO_URL = './app/public/3D/sb.obj';
 
 // Project screenshots shown as floating cards in the backdrop, in display order.
 var PROJECTS = [
@@ -124,7 +130,7 @@ var ABOUT = (function () {
     var mouseTargetX = 0, mouseTargetY = 0;
     var mouseX = 0, mouseY = 0;
 
-    var stars, shards, ring;
+    var stars, shards, ring, logo;
     var cards = [];
 
     // ---- builders ---------------------------------------------------------
@@ -335,6 +341,151 @@ var ABOUT = (function () {
       });
     }
 
+    // The rest of the backdrop is unlit (basic / points / line materials, which
+    // ignore lights). These lights exist solely to give the central logo real
+    // 3D form; they have no effect on the stars, shards or cards.
+    function buildLights () {
+      scene.add(new THREE.AmbientLight('#6b7280', 0.55));
+
+      var key = new THREE.DirectionalLight('#ffffff', 2.1);
+      key.position.set(18, 26, 30);
+      scene.add(key);
+
+      var rim = new THREE.DirectionalLight('#7aa2ff', 1.4);
+      rim.position.set(-22, 6, -28);
+      scene.add(rim);
+
+      var fill = new THREE.DirectionalLight('#cfd6e6', 0.6);
+      fill.position.set(-10, -14, 18);
+      scene.add(fill);
+    }
+
+    // Procedural environment for the glass logo's reflections / refraction. A
+    // gradient "studio" (cool horizon band + a couple of soft highlights) baked
+    // through PMREM. `scene.environment` only affects the physical glass
+    // material — the unlit basic / points / line backdrop ignores it.
+    function buildEnvironment () {
+      var w = 512, h = 256;
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+
+      var g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0.0, '#070b18');
+      g.addColorStop(0.42, '#202a47');
+      g.addColorStop(0.5, '#9fb4e6');
+      g.addColorStop(0.58, '#202a47');
+      g.addColorStop(1.0, '#04050b');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+
+      function blob (x, y, r, color, alpha) {
+        var rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+        rg.addColorStop(0, color);
+        rg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = rg;
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalAlpha = 1;
+      }
+      blob(w * 0.28, h * 0.4, 90, '#eef3ff', 0.9);
+      blob(w * 0.74, h * 0.52, 130, '#7e9cdb', 0.6);
+
+      var tex = new THREE.CanvasTexture(canvas);
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+
+      var pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromEquirectangular(tex).texture;
+
+      tex.dispose();
+      pmrem.dispose();
+    }
+
+    // Central "SB" monogram: load the extruded-SVG OBJ, recentre + scale it to a
+    // fixed height, give it a glowing blue-metal look (metallic material +
+    // emissive core + additive edge outline + halo), then slow-spin it.
+    function buildLogo () {
+      logo = new THREE.Group();
+      scene.add(logo);
+
+      // Glowing bloom behind the monogram so it reads against the nebula even
+      // before / if the OBJ fails to load. Two stacked additive sprites give a
+      // soft, hot-centred halo.
+      var halo = new THREE.Group();
+      halo.userData.isHalo = true;
+      [[17, '#9bb4ff', 0.4], [10, '#dfe8ff', 0.5]].forEach(function (h) {
+        halo.add(new THREE.Mesh(
+          new THREE.CircleGeometry(h[0], 48),
+          new THREE.MeshBasicMaterial({
+            map: starSprite(),
+            color: h[1],
+            transparent: true,
+            opacity: h[2],
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+          })
+        ));
+      });
+      logo.add(halo);
+
+      // Polished blue metal that glows: fully metallic, so the environment map
+      // (see buildEnvironment) and lights give it bright reflections, plus a
+      // blue emissive so it glows from within. Opaque (no transmission) — that
+      // removes the self-intersection artefacts the glass version showed where
+      // the monogram's own faces overlapped.
+      var material = new THREE.MeshStandardMaterial({
+        color: '#5b8cff',
+        metalness: 1,
+        roughness: 0.22,
+        emissive: '#3a5cff',
+        emissiveIntensity: 0.8,
+        envMapIntensity: 1.6
+      });
+
+      // Glowing outline: only the sharp silhouette / extrusion edges survive the
+      // 32° threshold, so it traces the logo rather than fogging it with a full
+      // wireframe.
+      var edgeMaterial = new THREE.LineBasicMaterial({
+        color: '#bcd6ff',
+        transparent: true,
+        opacity: 0.65,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+
+      new OBJLoader().load(LOGO_URL, function (obj) {
+        obj.traverse(function (child) {
+          if (child.isMesh) {
+            child.material = material;
+            child.geometry.computeVertexNormals();
+            child.add(new THREE.LineSegments(
+              new THREE.EdgesGeometry(child.geometry, 32),
+              edgeMaterial
+            ));
+          }
+        });
+
+        // Recentre on the geometry centroid and scale so the tallest dimension
+        // is a fixed size, regardless of the model's authored units.
+        var box = new THREE.Box3().setFromObject(obj);
+        var center = box.getCenter(new THREE.Vector3());
+        var size = box.getSize(new THREE.Vector3());
+        var maxDim = Math.max(size.x, size.y, size.z) || 1;
+        var scale = 17 / maxDim;
+
+        obj.position.sub(center);
+
+        var spinner = new THREE.Group();
+        spinner.scale.setScalar(scale);
+        spinner.add(obj);
+        spinner.userData.isSpinner = true;
+        logo.add(spinner);
+      }, undefined, function () {
+        // OBJ unavailable — the halo alone marks the ring's centre.
+      });
+    }
+
     // ---- events -----------------------------------------------------------
 
     function readSize () {
@@ -412,6 +563,21 @@ var ABOUT = (function () {
         });
       }
 
+      // Central monogram: slow vertical spin, gentle bob + pointer lean. The
+      // halo is billboarded to always face the camera; the spinner turns.
+      if (logo) {
+        logo.position.y = Math.sin(t * 0.5) * 1.4;
+        logo.rotation.z = mouseX * 0.12;
+        logo.children.forEach(function (child) {
+          if (child.userData.isSpinner) {
+            child.rotation.y = t * 0.35;
+            child.rotation.x = -0.1 + mouseY * 0.18;
+          } else if (child.userData.isHalo) {
+            child.quaternion.copy(camera.quaternion);
+          }
+        });
+      }
+
       // Project ring: orbit with time + scroll, depth-fade each card.
       if (ring) {
         ring.rotation.y = t * 0.05 + scrollValue * Math.PI * 1.6;
@@ -465,6 +631,9 @@ var ABOUT = (function () {
       bgMaterial.uniforms.uAspect.value = width / height;
       buildStars();
       buildShards();
+      buildLights();
+      buildEnvironment();
+      buildLogo();
       buildRing();
 
       window.addEventListener('resize', onResize);

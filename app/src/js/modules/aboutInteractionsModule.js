@@ -13,7 +13,7 @@ import { gsap } from '../vendor/gsapSetup.js';
  *   - magnetic buttons that lean toward the pointer
  *   - project cards that tilt in 3D toward the pointer
  *   - stat numbers that count up when they scroll into view
- *   - a per-letter reveal of the hero name
+ *   - the hero name split onto two lines (SIMON / BERMUDEZ)
  *
  * Everything degrades gracefully on touch devices and when the user prefers
  * reduced motion. DOM build + event binding happen once; start()/stop() just
@@ -185,7 +185,7 @@ var ABOUT_FX = (function () {
       }
     }
 
-    // ---- hero letter reveal ----------------------------------------------
+    // ---- hero name layout -------------------------------------------------
 
     function splitHero () {
       var name = document.querySelector('.about__name');
@@ -196,7 +196,7 @@ var ABOUT_FX = (function () {
       name.setAttribute('aria-label', text);
       name.textContent = '';
 
-      // Each word becomes its own (block-level) line; chars animate within.
+      // Each word becomes its own (block-level) line: "SIMON" over "BERMUDEZ".
       var words = text.split(/\s+/);
       for (var w = 0; w < words.length; w++) {
         var wordEl = document.createElement('span');
@@ -215,25 +215,14 @@ var ABOUT_FX = (function () {
       }
     }
 
-    function revealHero () {
-      if (reduced) { return; }
+    // ---- dynamic year -----------------------------------------------------
 
-      var chars = document.querySelectorAll('.about__name__char');
-      if (!chars.length) { return; }
-
-      gsap.killTweensOf(chars);
-      gsap.fromTo(chars,
-        { yPercent: 120, opacity: 0, rotationX: -90 },
-        {
-          yPercent: 0,
-          opacity: 1,
-          rotationX: 0,
-          stagger: 0.035,
-          duration: 0.9,
-          ease: 'back.out(1.7)',
-          transformOrigin: '50% 100%'
-        }
-      );
+    function setYear () {
+      var year = new Date().getFullYear();
+      var els = document.querySelectorAll('.js-year');
+      for (var i = 0; i < els.length; i++) {
+        els[i].textContent = year;
+      }
     }
 
     // ---- lifecycle --------------------------------------------------------
@@ -242,6 +231,7 @@ var ABOUT_FX = (function () {
       if (built) { return; }
       built = true;
 
+      setYear();
       splitHero();
       buildCursor();
       bindMagnetic();
@@ -256,7 +246,6 @@ var ABOUT_FX = (function () {
       if (cursor) {
         gsap.to(cursor, { opacity: 1, duration: 0.4 });
       }
-      revealHero();
     }
 
     function stop () {

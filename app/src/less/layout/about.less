@@ -710,6 +710,141 @@
   color: @about-faint;
 }
 
+// Liquid glass -------------------------------------------------------------
+// Frosted, translucent "liquid glass" surfaces floated over the live three.js
+// backdrop: the WebGL nebula / starfield / spinning logo glow softly through
+// while the text on top stays crisp and legible. The mixin blurs + saturates
+// whatever is behind the surface, adds a bright top edge (specular highlight)
+// and a soft drop shadow for lift; an `@supports` block falls back to a
+// near-opaque dark surface on engines without backdrop-filter.
+.about-glass(@radius: 18px; @blur: 14px) {
+  position: relative;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.035) 52%,
+    rgba(255, 255, 255, 0.06)
+  );
+
+  -webkit-backdrop-filter: blur(@blur) saturate(165%);
+  backdrop-filter: blur(@blur) saturate(165%);
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: @radius;
+
+  box-shadow:
+    0 10px 34px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.06);
+}
+
+// Hero: one frosted panel behind the whole intro, so the spinning centre logo
+// glows through softly behind the name.
+.about__hero__panel {
+  align-self: center;
+
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 54px 50px 46px;
+
+  .about-glass(30px, 16px);
+}
+
+// Section labels become hugging frosted chips.
+.about__h2 {
+  display: inline-block;
+  padding: 16px 24px 18px;
+
+  .about-glass(16px);
+}
+
+.about__contact .about__h2 {
+  padding: 24px 36px 28px;
+}
+
+// Lead + body copy get their own readable plates.
+.about__lead,
+.about__text {
+  margin-bottom: 18px;
+  padding: 22px 26px;
+
+  .about-glass(18px);
+}
+
+// Stat tiles: drop the connected divider strip for separate glass tiles. The
+// `:first-child` is listed too, to override the earlier `border-left: 0`.
+.about__stats {
+  gap: 14px;
+}
+
+.about__stat,
+.about__stat:first-child {
+  .about-glass(16px);
+}
+
+// Skill columns become free-standing glass tiles (no gridline frame).
+.about__skillgrid {
+  gap: 14px;
+
+  background: transparent;
+  border: 0;
+}
+
+.about__skillcol {
+  .about-glass(16px);
+}
+
+// Cards / panels across the rest of the panel.
+.about__service,
+.about__project,
+.about__quote,
+.about__award,
+.about__cert {
+  .about-glass(18px);
+}
+
+// Keep the "featured" accents brighter than the default hairline border.
+.about__project--featured,
+.about__award--feature {
+  border-color: rgba(255, 255, 255, 0.42);
+}
+
+// Contact pills.
+.about__email {
+  padding: 14px 30px;
+
+  .about-glass(40px);
+}
+
+.about__copyright {
+  display: inline-block;
+  padding: 11px 20px;
+
+  .about-glass(30px);
+}
+
+// Fallback: without backdrop-filter, lean on a near-opaque dark surface so the
+// text never sits directly on the moving backdrop.
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .about__hero__panel,
+  .about__h2,
+  .about__lead,
+  .about__text,
+  .about__stat,
+  .about__skillcol,
+  .about__service,
+  .about__project,
+  .about__quote,
+  .about__award,
+  .about__cert,
+  .about__email,
+  .about__copyright {
+    background: rgba(11, 13, 22, 0.84);
+  }
+}
+
 // Responsive ---------------------------------------------------------------
 @media screen and (max-width: 720px) {
   .about .tails__section {

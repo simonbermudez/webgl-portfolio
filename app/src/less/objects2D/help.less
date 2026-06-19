@@ -3,7 +3,10 @@
 // general
 .help {
   position: fixed;
-  z-index: 10;
+  // Above the shared navbar (.menu, z-index 10) so this modal covers it and its
+  // top-left quit button isn't blocked by the hamburger sitting at the same
+  // spot — otherwise the overlay can't be closed.
+  z-index: 20;
   top: 0;
   left: 0;
 

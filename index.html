@@ -209,21 +209,6 @@
 
   <div id="mobile-body">
     <div class="heads">
-      <div class="menu">
-        <div class="menu__button">
-          <div class="menu__button__line menu__button__line--top"></div>
-          <div class="menu__button__line menu__button__line--middle"></div>
-          <div class="menu__button__line menu__button__line--bottom"></div>
-        </div>
-
-        <div class="menu__items">
-          <a class="menu__item menu__items--3D" data-button="sounds"> MUTE </a>
-          <a class="menu__item menu__items--3D" data-button="help"> HELP </a>
-          <a class="menu__item placeholder--email"> CONTACT </a>
-          <a class="menu__item menu__items--3D" data-button="quality"> QUALITY 0.5 </a>
-        </div>
-      </div>
-
       <div class="heads__viewport">
         <div class="trigger__info trigger__info--arrow">
           <svg xmln="http://www.w3.org/2000/svg" viewBox="0 0 25 20">
@@ -381,6 +366,25 @@
       </div>
     </div>
 
+    <!-- Top-left navbar, shared across the presentation (heads) and the
+         about/portfolio (tails) views. Lifted out of .heads and pinned
+         (position: fixed) so the one menu persists through the slide between
+         the two views instead of sliding away with the presentation. -->
+    <div class="menu">
+      <div class="menu__button">
+        <div class="menu__button__line menu__button__line--top"></div>
+        <div class="menu__button__line menu__button__line--middle"></div>
+        <div class="menu__button__line menu__button__line--bottom"></div>
+      </div>
+
+      <div class="menu__items">
+        <a class="menu__item menu__items--3D" data-button="sounds"> MUTE </a>
+        <a class="menu__item menu__items--3D" data-button="help"> HELP </a>
+        <a class="menu__item placeholder--email"> CONTACT </a>
+        <a class="menu__item menu__items--3D" data-button="quality"> QUALITY 0.5 </a>
+      </div>
+    </div>
+
     <div class="tails about">
       <!-- Live three.js backdrop (aboutModule mounts its canvas here) -->
       <div class="about__bg" aria-hidden="true"></div>
@@ -389,15 +393,17 @@
 
         <!-- HERO -->
         <section class="tails__section about__hero" aria-labelledby="about-name">
-          <p class="about__eyebrow tails__section__el"><span class="about__code">&lt;/&gt;</span> I build <span class="about__code">&lt;/&gt;</span></p>
-          <h1 id="about-name" class="about__name">SIMON BERMUDEZ</h1>
-          <p class="about__role tails__section__el">Creative Technologist &middot; Software Architect</p>
-          <p class="about__meta tails__section__el">Toronto, Canada &nbsp;&bull;&nbsp; English / Spanish &nbsp;&bull;&nbsp; 11+ years building software</p>
-          <div class="about__cta tails__section__el">
-            <a class="about__btn about__btn--primary" href="https://docs.google.com/document/d/1lnzOdCqcqq-CdyQAy-avOWt560XXlrrOxjScahsQXAA" target="_blank" rel="noopener">Resume</a>
-            <a class="about__btn" href="https://simonbermudez.com/calendar" target="_blank" rel="noopener">Book a Call</a>
-            <a class="about__btn" href="https://github.com/simonbermudez" target="_blank" rel="noopener">GitHub</a>
-            <a class="about__btn" href="https://linkedin.com/in/simonbermudez" target="_blank" rel="noopener">LinkedIn</a>
+          <div class="about__hero__panel">
+            <p class="about__eyebrow tails__section__el"><span class="about__code">&lt;/&gt;</span> I build <span class="about__code">&lt;/&gt;</span></p>
+            <h1 id="about-name" class="about__name">SIMON BERMUDEZ</h1>
+            <p class="about__role tails__section__el">Creative Technologist &middot; Software Architect</p>
+            <p class="about__meta tails__section__el">Toronto, Canada &nbsp;&bull;&nbsp; English / Spanish &nbsp;&bull;&nbsp; 11+ years building software</p>
+            <div class="about__cta tails__section__el">
+              <a class="about__btn about__btn--primary" href="/resume" target="_blank" rel="noopener">Resume</a>
+              <a class="about__btn" href="https://simonbermudez.com/calendar" target="_blank" rel="noopener">Book a Call</a>
+              <a class="about__btn" href="https://github.com/simonbermudez" target="_blank" rel="noopener">GitHub</a>
+              <a class="about__btn" href="https://linkedin.com/in/simonbermudez" target="_blank" rel="noopener">LinkedIn</a>
+            </div>
           </div>
         </section>
 
@@ -657,10 +663,9 @@
           <div class="about__cta tails__section__el">
             <a class="about__btn" href="https://github.com/simonbermudez" target="_blank" rel="noopener">GitHub</a>
             <a class="about__btn" href="https://linkedin.com/in/simonbermudez" target="_blank" rel="noopener">LinkedIn</a>
-            <a class="about__btn" href="https://rei.simonbermudez.com" target="_blank" rel="noopener">Real Estate</a>
             <a class="about__btn" href="https://simonbermudez.com/calendar" target="_blank" rel="noopener">Book a Call</a>
           </div>
-          <p class="about__copyright tails__section__el">&copy; 2025 Simon Bermudez &mdash; All Rights Reserved</p>
+          <p class="about__copyright tails__section__el">&copy; <span class="js-year">2025</span> Simon Bermudez &mdash; All Rights Reserved</p>
         </section>
 
       </main>

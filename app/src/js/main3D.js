@@ -415,7 +415,11 @@ jQuery(function () {
   var $aboutBg = jQuery('.about__bg');
 
   var $tailsSections = jQuery('.tails__section');
-  $tailsSections.find('.tails__section__el').animate({ opacity: 0, y: 100 }, 0);
+  // The hero is on-screen the instant the about panel opens, so it must not
+  // depend on the scroll-into-view reveal: the first section never enters the
+  // waypoint band, so its elements would stay hidden ("doesn't render all").
+  // Render the hero statically and only fade up the sections you scroll down to.
+  $tailsSections.find('.tails__section__el').not('.about__hero *').animate({ opacity: 0, y: 100 }, 0);
 
   var waypoint = $tailsSections.waypoint({
     $viewport: jQuery('.tails'),

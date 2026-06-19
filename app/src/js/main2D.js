@@ -65,8 +65,10 @@ jQuery(function () {
     var $tails = jQuery('.tails');
     var $tailsSections = $tails.find('.tails__section');
 
-    // prepare els
-    $tailsSections.find('.tails__section__el').animate({ opacity: 0, y: 100 }, 0);
+    // prepare els — but keep the hero static: it's on-screen the instant the
+    // panel opens and never enters the waypoint band, so hiding it would leave
+    // it stuck (only the name shows). Sections you scroll to still fade up.
+    $tailsSections.find('.tails__section__el').not('.about__hero *').animate({ opacity: 0, y: 100 }, 0);
 
     var waypoint = $tailsSections.waypoint({
       offset: 30,
