@@ -69,6 +69,14 @@ var SCENE = (function () {
     var cameraCache = { speed: 0 };
     var isScrolling = false;
 
+    // Eased target for touch scrolling. Touch input updates this target and the
+    // render loop glides the camera toward it, so fast swipes feel smooth on
+    // mobile instead of slamming the camera frame-by-frame (which stutters and
+    // forces slow dragging). null means "no touch glide active" — other forms
+    // of navigation (wheel, keyboard, menu) clear it so they never fight it.
+    var scrollTargetY = null;
+    var isTouching = false; // finger currently down — lock the camera 1:1 to it
+
     // background lines
     var backgroundLines;
 
@@ -110,9 +118,12 @@ var SCENE = (function () {
       // scroll
       var newDate;
       var oldDate = new Date();
-      
+
       function onScroll (event) {
         event.preventDefault();
+
+        // Wheel takes over from any in-progress touch glide.
+        scrollTargetY = null;
         
         newDate = new Date();
         var elapsed = newDate.getTime() - oldDate.getTime();
@@ -183,6 +194,7 @@ var SCENE = (function () {
       function onKeyDown (event) {
         // Enable smooth keyboard navigation for all devices
         if (!isScrolling && isActive) {
+          scrollTargetY = null; // keyboard takes over from any touch glide
           var keyCode = event.keyCode;
           var scrollAmount = parameters.sectionHeight * 0.3; // Smaller increments for smoother movement
           
@@ -283,110 +295,73 @@ var SCENE = (function () {
           lastTouchY = touchStartY;
           touchVelocity = 0;
           lastTouchTime = new Date();
+
+          // Seed the glide target at the camera's current Y so the first move
+          // continues smoothly from where we are, and lock to the finger.
+          if (MobileUtils.isMobile() && !isScrolling) {
+            scrollTargetY = camera.position.y;
+            isTouching = true;
+          }
         }
 
         function onTouchMove(event) {
           if (MobileUtils.isMobile()) {
-            // Light throttling for mobile - more responsive than before
             var currentTime = new Date();
             var elapsed = currentTime.getTime() - lastTouchTime.getTime();
-            
-            // Reduced throttling and allow touches during momentum for better responsiveness
-            if (elapsed > 0) { // Reduced from 8ms to 4ms for better touch detection
+
+            if (elapsed > 0) {
               var currentTouchY = event.originalEvent.touches[0].clientY;
               var deltaY = lastTouchY - currentTouchY;
               touchVelocity = deltaY;
-              
-              // Process even small movements for smooth feel
-              if (Math.abs(deltaY) > 0.2) { // Reduced threshold for better responsiveness
-                // Calculate new camera position based on touch movement
-                var sensitivity = 0.12; // Slightly reduced for smoother control
-                var newCameraY = camera.position.y - (deltaY * sensitivity);
-                
-                // Constrain to section bounds
+
+              // Process even small movements for a smooth feel.
+              if (Math.abs(deltaY) > 0.2) {
+                // 1:1 mapping — a finger movement of N screen pixels moves the
+                // content by N pixels. pxToWorld() converts finger pixels to the
+                // camera's world units for the current projection.
+                var sensitivity = pxToWorld();
+                if (scrollTargetY === null) { scrollTargetY = camera.position.y; }
+
                 var maxY = parameters.sectionHeight;
                 var minY = (-sections.length * parameters.sectionHeight) - parameters.sectionHeight;
-                newCameraY = Math.max(minY, Math.min(maxY, newCameraY));
-                
-                // Direct camera position update for immediate response
-                camera.position.y = newCameraY;
-                
-                // Update current section index based on position
-                var newIndex = Math.round(-camera.position.y / parameters.sectionHeight);
-                newIndex = Math.max(0, Math.min(sections.length - 1, newIndex));
-                
-                if (newIndex !== currentIndex) {
-                  var previousIndexLocal = currentIndex;
-                  currentIndex = newIndex;
-                  
-                  // Trigger section change events for smooth transitions
-                  var way = newIndex < previousIndexLocal ? -1 : 1;
-                  var data = {
-                    from: {
-                      name: sectionsMap[previousIndexLocal],
-                      index: previousIndexLocal
-                    },
-                    to: {
-                      name: sectionsMap[newIndex],
-                      index: newIndex
-                    },
-                    way: way === -1 ? 'up' : 'down'
-                  };
-                  
-                  events.trigger('section:changeBegin', data);
-                }
+                scrollTargetY = Math.max(
+                  minY,
+                  Math.min(maxY, scrollTargetY - (deltaY * sensitivity))
+                );
+
+                // Lock the camera straight to the finger (no easing lag) so the
+                // drag tracks 1:1; the render loop only eases release momentum.
+                camera.position.y = scrollTargetY;
+                updateSectionFromCamera();
               }
-              
+
               lastTouchY = currentTouchY;
               lastTouchTime = currentTime;
             }
-            
+
             event.preventDefault(); // Prevent default scrolling
           }
         }
 
         function onTouchEnd(event) {
           if (MobileUtils.isMobile()) {
-            // Add momentum scrolling for mobile with lower threshold
-            if (Math.abs(touchVelocity) > 1.5) { // Lower threshold for more responsive momentum
-              var momentum = touchVelocity * 0.6; // Moderate momentum factor
-              var targetY = camera.position.y - momentum;
-              
-              // Constrain momentum to section bounds
+            isTouching = false;
+
+            // Flick momentum: extend the glide target by the release velocity,
+            // in the same 1:1 world scale as the drag. The render-loop easing
+            // carries the camera there with natural inertia.
+            if (Math.abs(touchVelocity) > 1.5) {
+              if (scrollTargetY === null) { scrollTargetY = camera.position.y; }
+
+              var momentum = touchVelocity * pxToWorld() * 9;
               var maxY = parameters.sectionHeight;
               var minY = (-sections.length * parameters.sectionHeight) - parameters.sectionHeight;
-              targetY = Math.max(minY, Math.min(maxY, targetY));
-              
-              // Animate to momentum target with quick response
-              TweenLite.to(camera.position, 0.6, { // Faster momentum animation
-                y: targetY, 
-                ease: window.Quart.easeOut,
-                onUpdate: function() {
-                  // Update section tracking during momentum scroll
-                  var newIndex = Math.round(-camera.position.y / parameters.sectionHeight);
-                  newIndex = Math.max(0, Math.min(sections.length - 1, newIndex));
-                  
-                  if (newIndex !== currentIndex) {
-                    var previousIndexLocal = currentIndex;
-                    currentIndex = newIndex;
-                    
-                    var way = newIndex < previousIndexLocal ? -1 : 1;
-                    var data = {
-                      from: {
-                        name: sectionsMap[previousIndexLocal],
-                        index: previousIndexLocal
-                      },
-                      to: {
-                        name: sectionsMap[newIndex],
-                        index: newIndex
-                      },
-                      way: way === -1 ? 'up' : 'down'
-                    };
-                    
-                    events.trigger('section:changeBegin', data);
-                  }
-                }
-              });
+              scrollTargetY = Math.max(
+                minY,
+                Math.min(maxY, scrollTargetY - momentum)
+              );
+            } else {
+              scrollTargetY = null; // no flick — leave the camera where it is
             }
             touchVelocity = 0;
           } else {
@@ -486,10 +461,54 @@ var SCENE = (function () {
       frameId = window.requestAnimationFrame(draw);
     }
 
+    // World units per screen pixel at the content plane (z = 0) for the current
+    // camera. Lets finger movement map 1:1 to on-screen content movement:
+    // visibleHeight = 2 * distance * tan(fov / 2); units-per-pixel = it / height.
+    function pxToWorld () {
+      if (!camera || !height) { return 0.055; }
+      var visibleHeight =
+        2 * camera.position.z * Math.tan((camera.fov * Math.PI) / 360);
+      return visibleHeight / height;
+    }
+
+    // Derive the active section from the camera's current Y and fire the
+    // section-change event when it crosses a boundary. Used by the eased touch
+    // glide so transitions track the smoothed camera, not raw touch input.
+    function updateSectionFromCamera () {
+      var newIndex = Math.round(-camera.position.y / parameters.sectionHeight);
+      newIndex = Math.max(0, Math.min(sections.length - 1, newIndex));
+
+      if (newIndex !== currentIndex) {
+        var previousIndexLocal = currentIndex;
+        currentIndex = newIndex;
+
+        var way = newIndex < previousIndexLocal ? -1 : 1;
+        events.trigger('section:changeBegin', {
+          from: { name: sectionsMap[previousIndexLocal], index: previousIndexLocal },
+          to: { name: sectionsMap[newIndex], index: newIndex },
+          way: way === -1 ? 'up' : 'down'
+        });
+      }
+    }
+
     function render () {
       // camera noise
       camera.position.y += Math.cos(cameraShakeY) / 50;
       cameraShakeY += 0.02;
+
+      // Post-release momentum glide: while the finger is down the camera is
+      // locked 1:1 to it (in onTouchMove); after release we ease toward the
+      // momentum target here. Releases (null) once settled so wheel/keyboard/
+      // menu navigation can take over cleanly.
+      if (scrollTargetY !== null && !isScrolling && !isTouching) {
+        var diff = scrollTargetY - camera.position.y;
+        if (Math.abs(diff) < 0.06) {
+          scrollTargetY = null;
+        } else {
+          camera.position.y += diff * 0.16;
+          updateSectionFromCamera();
+        }
+      }
 
       // mouse camera move - skip on mobile to keep camera centered
       if (!MobileUtils.isMobile()) {
@@ -516,6 +535,9 @@ var SCENE = (function () {
       // in case goTo is called
       // otherwise navigation set currentIndex
       currentIndex = index;
+
+      // A tween now owns the camera; drop any touch glide so they don't fight.
+      scrollTargetY = null;
 
       var nextPosition = index * -parameters.sectionHeight;
       

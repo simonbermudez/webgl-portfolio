@@ -41,5 +41,8 @@ export default defineConfig({
   server: {
     port: 8000,
     host: true,
+    // Allow access through Cloudflare quick tunnels (*.trycloudflare.com) so the
+    // dev server can be shared via a public link for live preview.
+    allowedHosts: ['.trycloudflare.com'],
   },
 });

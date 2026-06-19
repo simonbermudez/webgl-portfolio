@@ -16,6 +16,8 @@
 
 import * as THREE from 'three';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const prefersReduced =
   window.matchMedia &&
@@ -29,14 +31,6 @@ function initDom() {
   // Current year
   document.querySelectorAll('.js-year').forEach((el) => {
     el.textContent = String(new Date().getFullYear());
-  });
-
-  // Print / PDF buttons
-  document.querySelectorAll('#print-btn, #print-btn-2').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.print();
-    });
   });
 
   // Reveal-on-scroll
@@ -204,12 +198,20 @@ function initScene() {
   const stars = new THREE.Points(starGeo, starMat);
   scene.add(stars);
 
-  // --- Morphing centerpiece ----------------------------------------------
-  // One geometry per chapter; we cross-fade scale between them as the story
-  // advances so the central object "transforms" with each scroll chapter.
-  const detail = window.innerWidth < 768 ? 0 : 1;
+  // --- Morphing point-cloud centerpiece ----------------------------------
+  // Every chapter is a different 3D form, but instead of swapping meshes we
+  // render ONE point cloud whose points flow from one shape into the next as
+  // the story scrolls. Each shape is surface-sampled into the same number of
+  // points (ordered into latitude/longitude bands so point N maps to a similar
+  // direction across shapes), so the form genuinely morphs rather than one
+  // shape shrinking away and another reappearing. The SB logo (chapter 0) is
+  // sampled the same way once it loads and joins the morph.
+  const isMobile = window.innerWidth < 768;
+  const POINTS = isMobile ? 2800 : 5400;
+  const detail = isMobile ? 0 : 1;
+
   const shapes = [
-    new THREE.IcosahedronGeometry(2.4, detail),
+    new THREE.IcosahedronGeometry(2.4, detail), // chapter 0: SB logo swaps in
     new THREE.TorusKnotGeometry(1.6, 0.45, 140, 16),
     new THREE.OctahedronGeometry(2.6, 0),
     new THREE.DodecahedronGeometry(2.4, 0),
@@ -222,100 +224,61 @@ function initScene() {
   const coreGroup = new THREE.Group();
   scene.add(coreGroup);
 
-  const wireMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.6,
-  });
-  const fillMat = new THREE.MeshStandardMaterial({
-    color: 0x0c0c10,
-    metalness: 0.6,
-    roughness: 0.35,
-    transparent: true,
-    opacity: 0.9,
-  });
+  // Surface-sample a geometry into POINTS points, ordered by (elevation,
+  // azimuth) about the origin. The shared ordering means index N lands in a
+  // similar direction on every shape, so lerping index-to-index reads as a
+  // coherent, band-by-band morph instead of random point scramble.
+  function sampleShape(geometry) {
+    const sampler = new MeshSurfaceSampler(new THREE.Mesh(geometry)).build();
+    const tmp = new THREE.Vector3();
+    const raw = new Float32Array(POINTS * 3);
+    for (let i = 0; i < POINTS; i++) {
+      sampler.sample(tmp);
+      raw[i * 3] = tmp.x;
+      raw[i * 3 + 1] = tmp.y;
+      raw[i * 3 + 2] = tmp.z;
+    }
+    const elev = (i) =>
+      Math.atan2(raw[i * 3 + 1], Math.hypot(raw[i * 3], raw[i * 3 + 2]));
+    const azim = (i) => Math.atan2(raw[i * 3 + 2], raw[i * 3]);
+    const order = Array.from({ length: POINTS }, (_, i) => i).sort((a, b) => {
+      const ea = elev(a);
+      const eb = elev(b);
+      return Math.abs(ea - eb) > 1e-3 ? ea - eb : azim(a) - azim(b);
+    });
+    const out = new Float32Array(POINTS * 3);
+    for (let i = 0; i < POINTS; i++) {
+      const s = order[i];
+      out[i * 3] = raw[s * 3];
+      out[i * 3 + 1] = raw[s * 3 + 1];
+      out[i * 3 + 2] = raw[s * 3 + 2];
+    }
+    return out;
+  }
 
-  // Holographic grid shader for the SB logo: a dense, static triplanar grid
-  // with a fresnel rim glow and a soft constant body glow. Additive blending
-  // makes it luminesce on the black backdrop.
-  const logoUniforms = {
-    uScale: { value: 4.6 }, // grid density (cells per local unit)
-    uColor: { value: new THREE.Color(0x0a1018) }, // dim base fill
-    uGlow: { value: new THREE.Color(0xaecbff) }, // line / rim colour (tracks accent)
-    uOpacity: { value: 1.0 },
-  };
-  const logoMat = new THREE.ShaderMaterial({
-    uniforms: logoUniforms,
+  const shapeSamples = shapes.map((geo) => sampleShape(geo));
+
+  const morphGeo = new THREE.BufferGeometry();
+  const morphPos = new Float32Array(POINTS * 3);
+  morphPos.set(shapeSamples[0]); // start settled on the first shape
+  morphGeo.setAttribute('position', new THREE.BufferAttribute(morphPos, 3));
+  const morphMat = new THREE.PointsMaterial({
+    color: 0xaecbff,
+    size: isMobile ? 0.06 : 0.05,
+    sizeAttenuation: true,
     transparent: true,
+    opacity: 0.92,
     depthWrite: false,
-    side: THREE.DoubleSide,
     blending: THREE.AdditiveBlending,
-    extensions: { derivatives: true }, // fwidth() (no-op on WebGL2)
-    vertexShader: /* glsl */ `
-      varying vec3 vLocal;
-      varying vec3 vNormal;
-      varying vec3 vView;
-      void main() {
-        vLocal = position;
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        vView = -mv.xyz;
-        vNormal = normalMatrix * normal;
-        gl_Position = projectionMatrix * mv;
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      precision highp float;
-      uniform float uScale;
-      uniform float uOpacity;
-      uniform vec3 uColor;
-      uniform vec3 uGlow;
-      varying vec3 vLocal;
-      varying vec3 vNormal;
-      varying vec3 vView;
-
-      // Anti-aliased triplanar grid: 1.0 on the lines, 0.0 between them.
-      float gridLines(vec3 p) {
-        vec3 d = fwidth(p);
-        vec3 a = abs(fract(p - 0.5) - 0.5) / max(d, vec3(1e-5));
-        float line = min(min(a.x, a.y), a.z);
-        return 1.0 - clamp(line, 0.0, 1.0);
-      }
-
-      void main() {
-        vec3 n = normalize(vNormal);
-        vec3 v = normalize(vView);
-        float fres = pow(1.0 - abs(dot(n, v)), 2.0);
-
-        float grid = gridLines(vLocal * uScale);
-
-        // dense grid lines + fresnel rim + a faint constant body glow
-        float glow = grid * 0.9 + fres * 1.3 + 0.14;
-        vec3 col = uColor + uGlow * glow;
-        float alpha = clamp(grid * 0.6 + fres * 0.9 + 0.14, 0.0, 1.0) * uOpacity;
-        gl_FragColor = vec4(col, alpha);
-      }
-    `,
   });
+  const morph = new THREE.Points(morphGeo, morphMat);
+  coreGroup.add(morph);
 
-  const meshes = shapes.map((geo) => {
-    const g = new THREE.Group();
-    const fill = new THREE.Mesh(geo, fillMat);
-    const wire = new THREE.Mesh(geo, wireMat);
-    wire.scale.setScalar(1.001);
-    g.add(fill);
-    g.add(wire);
-    g.scale.setScalar(0.0001);
-    g.visible = false;
-    coreGroup.add(g);
-    return g;
-  });
-
-  // Hero centerpiece: the SB logo (app/public/3D/sb.obj) rendered with the
-  // animated holographic grid shader above. Loads async; until then the
-  // icosahedron stands in. We bake the centre/scale transform into the geometry
-  // (so the grid is in object space and rotates with the logo) and swap it into
-  // the first chapter's slot (meshes[0]) to inherit the scroll blend/spin.
+  // Hero centerpiece: the SB logo (app/public/3D/sb.obj). Loads async; until
+  // then chapter 0's icosahedron sample stands in. We centre, fit and orient it
+  // face-on to the camera, strip non-position attributes so the sub-meshes
+  // merge cleanly, then surface-sample it into the same point budget and drop
+  // it into the first chapter's slot so it morphs like every other shape.
   new OBJLoader().load(
     '/app/public/3D/sb.obj',
     (obj) => {
@@ -325,7 +288,6 @@ function initScene() {
       });
       if (!geos.length) return;
 
-      // Combined bounding box across all sub-meshes (they share object space).
       const box = new THREE.Box3();
       geos.forEach((g) => {
         g.computeBoundingBox();
@@ -335,23 +297,30 @@ function initScene() {
       const center = new THREE.Vector3();
       box.getSize(size);
       box.getCenter(center);
-      const fit = 4.2 / (Math.max(size.x, size.y, size.z) || 1);
+      const fit = 4.6 / (Math.max(size.x, size.y, size.z) || 1);
+      const orient = new THREE.Matrix4().makeRotationFromEuler(
+        new THREE.Euler(0, -Math.PI / 2, 0) // flat monogram faces the camera
+      );
 
-      const logo = new THREE.Group();
       geos.forEach((g) => {
         g.translate(-center.x, -center.y, -center.z);
         g.scale(fit, fit, fit);
-        g.computeVertexNormals(); // ensure normals exist for the fresnel term
-        logo.add(new THREE.Mesh(g, logoMat));
+        g.applyMatrix4(orient);
+        g.deleteAttribute('uv'); // keep attributes uniform for the merge
+        g.deleteAttribute('normal');
       });
 
-      const slot = meshes[0];
-      slot.clear(); // drop the placeholder icosahedron
-      slot.add(logo);
+      let merged;
+      try {
+        merged = geos.length > 1 ? mergeGeometries(geos, false) : geos[0];
+      } catch (e) {
+        merged = geos[0];
+      }
+      if (merged) shapeSamples[0] = sampleShape(merged);
     },
     undefined,
     () => {
-      /* keep the icosahedron fallback on error */
+      /* keep the icosahedron-sample fallback on error */
     }
   );
 
@@ -403,11 +372,6 @@ function initScene() {
   let elapsed = 0;
   let lastTime = performance.now();
   const accent = new THREE.Color();
-  // Fixed world orientation for the hero logo: face-on to the camera, matching
-  // the flat /logo.png monogram. Never spins (just floats).
-  const logoFixedQuat = new THREE.Quaternion().setFromEuler(
-    new THREE.Euler(0, -Math.PI / 2, 0)
-  );
 
   function render() {
     const now = performance.now();
@@ -416,33 +380,29 @@ function initScene() {
     const t = elapsed;
     const p = scrollProgress; // 0..1 across the whole page
 
-    // Which chapter are we in? Cross-fade the matching shape in, others out.
-    const seg = p * (meshes.length - 1);
-    meshes.forEach((g, i) => {
-      const dist = Math.abs(i - seg);
-      const target = dist < 1 ? 1 - dist : 0; // triangular blend with neighbours
-      const cur = g.scale.x;
-      const next = cur + (target - cur) * 0.08;
-      g.visible = next > 0.01;
-      g.scale.setScalar(Math.max(0.0001, next));
-      // Hero slot (i === 0) holds the SB logo — orientation handled after the
-      // coreGroup rotation below so it can be cancelled out. Other shapes tumble.
-      if (i !== 0) {
-        g.rotation.x += 0.0015 + i * 0.0001;
-        g.rotation.y += 0.0022 + i * 0.0001;
-      }
-    });
+    // Morph the point cloud between the current and next chapter's shape. Each
+    // point eases toward its interpolated target every frame, so the form flows
+    // from one shape into the next instead of one shrinking away and another
+    // appearing. shapeSamples[0] is swapped to the SB logo once it loads, so the
+    // hero joins the same morph automatically.
+    const seg = p * (shapeSamples.length - 1);
+    const i0 = Math.min(shapeSamples.length - 1, Math.floor(seg));
+    const i1 = Math.min(shapeSamples.length - 1, i0 + 1);
+    let f = seg - i0;
+    f = f * f * (3 - 2 * f); // smoothstep between the two shapes
+    const from = shapeSamples[i0];
+    const to = shapeSamples[i1];
+    for (let k = 0; k < morphPos.length; k++) {
+      const target = from[k] + (to[k] - from[k]) * f;
+      morphPos[k] += (target - morphPos[k]) * 0.16;
+    }
+    morphGeo.attributes.position.needsUpdate = true;
 
-    // The whole core group rotates with scroll + time, and dollies subtly.
-    coreGroup.rotation.y = t * 0.06 + p * Math.PI * 1.5;
+    // The whole core group gently rocks (so the SB logo stays roughly face-on
+    // near the top) and rotates through as the story scrolls, dollying subtly.
+    coreGroup.rotation.y = Math.sin(t * 0.25) * 0.25 + p * Math.PI * 1.4;
     coreGroup.rotation.x = Math.sin(t * 0.15) * 0.12 + pointer.y * 0.15;
     coreGroup.position.y = Math.sin(t * 0.4) * 0.18;
-
-    // Hero logo: cancel the parent's rotation so it never spins, then let it
-    // drift gently as if floating in place.
-    const logo = meshes[0];
-    logo.quaternion.copy(coreGroup.quaternion).invert().multiply(logoFixedQuat);
-    logo.position.set(Math.sin(t * 0.5) * 0.1, Math.sin(t * 0.75) * 0.22, 0);
 
     halo.rotation.y = -t * 0.08;
     halo.rotation.x = t * 0.04;
@@ -456,9 +416,7 @@ function initScene() {
     accent.setHSL(hue, 0.5, 0.72);
     rim.color.copy(accent);
     haloMat.color.copy(accent);
-
-    // The logo grid is static; only its glow colour tracks the scene accent.
-    logoUniforms.uGlow.value.copy(accent);
+    morphMat.color.copy(accent); // the morphing point cloud tracks the accent
 
     // Camera: smooth pointer parallax + a slight push-in past mid-story.
     pointer.x += (pointer.tx - pointer.x) * 0.05;

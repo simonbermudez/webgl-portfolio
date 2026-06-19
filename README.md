@@ -26,7 +26,7 @@ This is a **multi-page** build with two entries:
   lazy-loads either the full 3D experience (`main3D.js`) or the 2D fallback
   (`main2D.js`).
 - [`story/index.html`](story/index.html) — a scroll-driven 3D **storytelling
-  resume** served at `/story/` (linked as "3D Story" from the About panel; the
+  resume** served at `/story/` (linked as "Story" from the About panel; the
   "Resume" button still points to the `/resume` PDF). Self-contained: a single
   fixed three.js canvas ([`app/src/js/story3D.js`](app/src/js/story3D.js)) whose
   centerpiece, camera and starfield are driven by scroll progress. The hero

@@ -262,9 +262,11 @@
   color: #fff;
 }
 
-// "SIMON" and "BERMUDEZ" each get their own line.
+// "SIMON" and "BERMUDEZ" each get their own line, and the characters within a
+// word never break onto a second line.
 .about__name__word {
   display: block;
+  white-space: nowrap;
 }
 
 .about__name__char {
@@ -439,6 +441,22 @@
 
   color: @about-bg;
   background: #fff;
+  border-radius: 30px;
+}
+
+// Client/engagement badge (e.g. Toptal) in the brand's signature blue.
+.about__client-tag {
+  display: inline-block;
+
+  margin-bottom: 18px;
+  padding: 5px 13px;
+
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+
+  color: #fff;
+  background: #204ecf;
   border-radius: 30px;
 }
 
