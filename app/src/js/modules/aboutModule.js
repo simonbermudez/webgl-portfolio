@@ -17,10 +17,10 @@ import random from '../utils/randomUtil.js';
  *   - an animated nebula gradient (fullscreen fragment shader)
  *   - a parallax starfield
  *   - slowly tumbling wireframe shards
- *   - a ring of floating cards textured with the real project screenshots
+ *   - a central "SB" monogram logo
  *
- * The whole thing reacts to scroll position (camera dolly + ring rotation) and
- * to the pointer (parallax), and pauses its RAF loop whenever the panel is not
+ * The whole thing reacts to scroll position (camera dolly) and to the pointer
+ * (parallax), and pauses its RAF loop whenever the panel is not
  * on screen. It degrades gracefully: if WebGL is unavailable the CSS gradient
  * background of `.tails` simply shows through.
  *
@@ -28,27 +28,10 @@ import random from '../utils/randomUtil.js';
  * @requires jQuery, THREE, random
  */
 
-var IMG_BASE = './app/public/img/about/';
-
-// "SB" monogram logo (extruded SVG from Blender) parked at the centre of the
-// project ring. Vendored locally so it loads same-origin (no CORS / runtime
-// network dependency) and is copied verbatim into the build by Vite.
+// "SB" monogram logo (extruded SVG from Blender) floating at the centre of the
+// backdrop. Vendored locally so it loads same-origin (no CORS / runtime network
+// dependency) and is copied verbatim into the build by Vite.
 var LOGO_URL = './app/public/3D/sb.obj';
-
-// Project screenshots shown as floating cards in the backdrop, in display order.
-var PROJECTS = [
-  'nasa.png',
-  'qualifacts.png',
-  'renderify.jpg',
-  'zeitdice.jpg',
-  'chess.jpg',
-  'dijkstras.png',
-  'dijkstras-maze.png',
-  'michael-owen.jpg'
-];
-
-// Screenshots that are already dark — don't invert these for dark mode.
-var DARK_PROJECTS = ['nasa.png', 'qualifacts.png'];
 
 var BG_VERTEX = [
   'varying vec2 vUv;',
@@ -130,8 +113,7 @@ var ABOUT = (function () {
     var mouseTargetX = 0, mouseTargetY = 0;
     var mouseX = 0, mouseY = 0;
 
-    var stars, shards, ring, logo;
-    var cards = [];
+    var stars, shards, logo;
 
     // ---- builders ---------------------------------------------------------
 
@@ -255,95 +237,9 @@ var ABOUT = (function () {
       scene.add(shards);
     }
 
-    function buildRing () {
-      ring = new THREE.Group();
-      ring.rotation.x = -0.08;
-      scene.add(ring);
-
-      var loader = new THREE.TextureLoader();
-      var radius = 30;
-      var n = PROJECTS.length;
-
-      PROJECTS.forEach(function (file, i) {
-        var angle = (i / n) * Math.PI * 2;
-        var holder = new THREE.Group();
-        holder.position.set(
-          Math.sin(angle) * radius,
-          random(-12, 12),
-          Math.cos(angle) * radius
-        );
-        // Face outward from the central axis.
-        holder.rotation.y = angle;
-
-        var material = new THREE.MeshBasicMaterial({
-          color: '#0b0d16',
-          transparent: true,
-          opacity: 0.5,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        });
-        var card = new THREE.Mesh(new THREE.PlaneGeometry(16, 10), material);
-
-        // Thin glowing frame behind the card.
-        var frame = new THREE.LineSegments(
-          new THREE.EdgesGeometry(new THREE.PlaneGeometry(16.8, 10.8)),
-          new THREE.LineBasicMaterial({
-            color: '#ffffff',
-            transparent: true,
-            opacity: 0.45,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
-          })
-        );
-        holder.add(frame);
-        holder.add(card);
-
-        holder.userData.bob = random(0, 6.28);
-        holder.userData.baseY = holder.position.y;
-        ring.add(holder);
-        cards.push({ holder: holder, mesh: card });
-
-        loader.load(IMG_BASE + file, function (tex) {
-          var img = tex.image;
-          var map = tex;
-
-          // Dark-mode the screenshot: redraw it inverted so the floating cards
-          // match the dark theme instead of glowing as bright white panels.
-          // Images that are already dark are left as-is.
-          if (img && img.width && img.height) {
-            if (DARK_PROJECTS.indexOf(file) === -1) {
-              try {
-                var canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                var ctx = canvas.getContext('2d');
-                ctx.filter = 'invert(1) hue-rotate(180deg)';
-                ctx.drawImage(img, 0, 0);
-                map = new THREE.CanvasTexture(canvas);
-              } catch (e) {
-                map = tex;
-              }
-            }
-
-            // Match the plane aspect to the image so screenshots aren't squashed.
-            var aspect = img.width / img.height;
-            var h = 10;
-            var w = h * aspect;
-            card.scale.set(w / 16, h / 10, 1);
-          }
-
-          map.minFilter = THREE.LinearFilter;
-          map.generateMipmaps = false;
-          material.map = map;
-          material.color.set('#ffffff');
-          material.needsUpdate = true;
-        });
-      });
-    }
-
     // The rest of the backdrop is unlit (basic / points / line materials, which
     // ignore lights). These lights exist solely to give the central logo real
-    // 3D form; they have no effect on the stars, shards or cards.
+    // 3D form; they have no effect on the stars or shards.
     function buildLights () {
       scene.add(new THREE.AmbientLight('#6b7280', 0.55));
 
@@ -482,7 +378,7 @@ var ABOUT = (function () {
         spinner.userData.isSpinner = true;
         logo.add(spinner);
       }, undefined, function () {
-        // OBJ unavailable — the halo alone marks the ring's centre.
+        // OBJ unavailable — the halo alone marks the centre.
       });
     }
 
@@ -578,20 +474,6 @@ var ABOUT = (function () {
         });
       }
 
-      // Project ring: orbit with time + scroll, depth-fade each card.
-      if (ring) {
-        ring.rotation.y = t * 0.05 + scrollValue * Math.PI * 1.6;
-        var v = new THREE.Vector3();
-        cards.forEach(function (c) {
-          c.holder.position.y = c.holder.userData.baseY +
-            Math.sin(t * 0.6 + c.holder.userData.bob) * 1.6;
-          c.holder.getWorldPosition(v);
-          // Closer to the camera (higher world z) => more opaque.
-          var op = THREE.MathUtils.clamp((v.z + 34) / 68, 0, 1);
-          c.mesh.material.opacity = 0.16 + op * 0.7;
-        });
-      }
-
       renderer.clear();
       renderer.render(bgScene, bgCamera);
       renderer.clearDepth();
@@ -634,7 +516,6 @@ var ABOUT = (function () {
       buildLights();
       buildEnvironment();
       buildLogo();
-      buildRing();
 
       window.addEventListener('resize', onResize);
       window.addEventListener('pointermove', onPointerMove);
