@@ -19,6 +19,14 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      // Multi-page build: the landing experience (index.html) and the
+      // scroll-driven 3D storytelling resume (story.html).
+      input: {
+        main: 'index.html',
+        story: 'story/index.html',
+      },
+    },
   },
   plugins: [
     viteStaticCopy({

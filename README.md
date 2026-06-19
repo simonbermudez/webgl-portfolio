@@ -19,10 +19,28 @@ $ npm run preview  # serve the production build locally
 ### Development
 
 `npm run dev` starts Vite with hot-module reload — the page updates as you save.
-The entry is the root [`index.html`](index.html), which loads
-[`app/src/js/index.js`](app/src/js/index.js); that file feature-detects WebGL and
-lazy-loads either the full 3D experience (`main3D.js`) or the 2D fallback
-(`main2D.js`).
+This is a **multi-page** build with two entries:
+
+- [`index.html`](index.html) — the landing experience. Loads
+  [`app/src/js/index.js`](app/src/js/index.js), which feature-detects WebGL and
+  lazy-loads either the full 3D experience (`main3D.js`) or the 2D fallback
+  (`main2D.js`).
+- [`story/index.html`](story/index.html) — a scroll-driven 3D **storytelling
+  resume** served at `/story/` (linked as "3D Story" from the About panel; the
+  "Resume" button still points to the `/resume` PDF). Self-contained: a single
+  fixed three.js canvas ([`app/src/js/story3D.js`](app/src/js/story3D.js)) whose
+  centerpiece, camera and starfield are driven by scroll progress. The hero
+  centerpiece is the SB logo (`app/public/3D/sb.obj`) loaded via `OBJLoader` and
+  rendered in the same wireframe style; project cards, a studio portrait and the
+  Dean's List certificates are shown as monochrome imagery that colours on hover.
+  The DOM choreography (reveal-on-scroll, chapter rail, count-up stats,
+  print-to-PDF) is plain DOM + IntersectionObserver. It reuses the site's
+  monochrome aesthetic but does not touch the legacy scene engine. Because the
+  page lives one directory deep, its assets use root-absolute paths
+  (`/app/public/...`).
+
+Both pages are wired into the production build via `rollupOptions.input` in
+[`vite.config.js`](vite.config.js).
 
 ### Production
 
