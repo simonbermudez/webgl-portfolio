@@ -18,6 +18,29 @@
 
 @about-futura: Futura, 'Trebuchet MS', Arial, sans-serif;
 
+// Border-box everything in the panel so `width: 100%` + padding (the glass
+// surfaces in particular) never spills past the viewport on narrow screens.
+// The global stylesheet does NOT set a border-box default, so without this the
+// padded full-width panels overflow horizontally and get clipped on mobile.
+.about,
+.about *,
+.about *::before,
+.about *::after {
+  box-sizing: border-box;
+}
+
+// `.tails__section` carries a float clearfix (the `.clear` mixin), whose
+// ::before / ::after pseudo-elements turn into stray flex/grid items in the two
+// sections that are themselves fl/grid containers (the hero and the stats row).
+// On the stats grid that phantom leading cell shoves the first tile into the
+// second column. Neither section uses floats, so drop the clearfix here.
+.about__hero::before,
+.about__hero::after,
+.about__stats::before,
+.about__stats::after {
+  content: none;
+}
+
 // The tails panel itself ---------------------------------------------------
 .tails.about {
   background-color: @about-bg;
@@ -315,7 +338,7 @@
 // Skills -------------------------------------------------------------------
 .about__skillgrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 1px;
 
   background: @about-line; // grid lines show through the gaps
@@ -354,7 +377,7 @@
 // Services -----------------------------------------------------------------
 .about__cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 20px;
 }
 
@@ -383,7 +406,7 @@
 // Portfolio ----------------------------------------------------------------
 .about__projects {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 24px;
 }
 
@@ -540,7 +563,7 @@
 // Testimonials -------------------------------------------------------------
 .about__quotes {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 20px;
 }
 
@@ -618,7 +641,7 @@
 
 .about__gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 16px;
 }
 
@@ -851,6 +874,16 @@
     padding: 80px 24px;
   }
 
+  // The hero panel keeps 50px side padding on desktop; that leaves almost no
+  // room for the name on a phone, so tighten it up here.
+  .about__hero__panel {
+    padding: 38px 22px 34px;
+  }
+
+  .about__name {
+    letter-spacing: clamp(3px, 1.4vw, 18px);
+  }
+
   .about__role {
     font-size: 16px;
   }
@@ -860,12 +893,53 @@
     line-height: 30px;
   }
 
+  // Wide letter-spacing on the section labels can push the inline-block chips
+  // past the viewport; ease it off on small screens.
+  .about__h2 {
+    letter-spacing: 5px;
+  }
+
+  // Two stat tiles per row. Flexbox `flex-basis: 50%` + the 14px gap rounds
+  // just past 100% and wraps to one-per-row; a 2-column grid divides the gap
+  // out of the tracks cleanly, so exactly two always fit.
+  .about__stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  // `min-width: auto` (the grid-item default) lets the big number expand a
+  // track past 1fr on the narrowest phones, overflowing the row; allow the
+  // tiles to shrink and size the number fluidly so it always fits its half.
   .about__stat {
-    flex-basis: 50%;
+    min-width: 0;
   }
 
   .about__stat__num {
-    font-size: 44px;
+    font-size: clamp(30px, 9vw, 44px);
+  }
+
+  .about__stat__label {
+    letter-spacing: 2px;
+  }
+
+  // The contact heading + email are sized for the desktop hero; both are
+  // text-driven (inline-block / single line) so they overflow a narrow phone
+  // unless their type is scaled down.
+  .about__contact {
+    padding-bottom: 120px !important;
+  }
+
+  .about__contact .about__h2 {
+    font-size: 26px;
+    letter-spacing: 3px;
+  }
+
+  .about__email {
+    font-size: 17px;
+    letter-spacing: 1px;
+
+    max-width: 100%;
+    word-break: break-word;
   }
 }
 
