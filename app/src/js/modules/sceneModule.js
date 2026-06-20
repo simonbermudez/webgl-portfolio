@@ -152,7 +152,7 @@ var SCENE = (function () {
 
           // Check if user is trying to scroll past the last section (explore more section)
           var maxY = 0;
-          var minY = (-sections.length * parameters.sectionHeight) - parameters.sectionHeight;
+          var minY = (-(sections.length - 1) * parameters.sectionHeight) - (parameters.sectionHeight * 0.5);
 
           // Detect if user is trying to scroll down past the explore more section
           if (targetCameraY < minY && delta < 0 && !isLocked) {
@@ -328,7 +328,7 @@ var SCENE = (function () {
                 if (scrollTargetY === null) { scrollTargetY = camera.position.y; }
 
                 var maxY = 0;
-                var minY = (-sections.length * parameters.sectionHeight) - parameters.sectionHeight;
+                var minY = (-(sections.length - 1) * parameters.sectionHeight) - (parameters.sectionHeight * 0.5);
 
                 // Prevent dragging up on the hello section
                 if (currentIndex === 0 && deltaY < 0) {
@@ -376,7 +376,7 @@ var SCENE = (function () {
 
               var momentum = touchVelocity * pxToWorld() * 9;
               var maxY = 0;
-              var minY = (-sections.length * parameters.sectionHeight) - parameters.sectionHeight;
+              var minY = (-(sections.length - 1) * parameters.sectionHeight) - (parameters.sectionHeight * 0.5);
               var proposed = scrollTargetY - momentum;
 
               // Trigger end if momentum would carry past the explore more section
