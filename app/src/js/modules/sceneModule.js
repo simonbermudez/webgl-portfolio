@@ -145,13 +145,17 @@ var SCENE = (function () {
           var scrollSpeed = 4; // Increased sensitivity for faster scrolling
           var targetCameraY = camera.position.y + (delta * scrollSpeed);
           
-          // Check if user is trying to scroll past the last section (thank you section)
-          var maxY = parameters.sectionHeight;
+          // Prevent scrolling up on the first (hello) section
+          if (currentIndex === 0 && delta > 0) {
+            return false;
+          }
+
+          // Check if user is trying to scroll past the last section (explore more section)
+          var maxY = 0;
           var minY = (-sections.length * parameters.sectionHeight) - parameters.sectionHeight;
-          
-          // Detect if user is trying to scroll down past the thank you section
+
+          // Detect if user is trying to scroll down past the explore more section
           if (targetCameraY < minY && delta < 0 && !isLocked) {
-            // User is trying to scroll past thank you section, trigger about me page
             events.trigger('end');
             return false;
           }
@@ -241,8 +245,9 @@ var SCENE = (function () {
               }
             });
           } else if (keyCode === 38) { // Up arrow
+            if (currentIndex === 0) { return false; }
             var newCameraY = camera.position.y + scrollAmount;
-            var maxY = parameters.sectionHeight;
+            var maxY = 0;
             newCameraY = Math.min(maxY, newCameraY);
             
             TweenLite.to(camera.position, 0.5, { 
@@ -322,11 +327,27 @@ var SCENE = (function () {
                 var sensitivity = pxToWorld();
                 if (scrollTargetY === null) { scrollTargetY = camera.position.y; }
 
-                var maxY = parameters.sectionHeight;
+                var maxY = 0;
                 var minY = (-sections.length * parameters.sectionHeight) - parameters.sectionHeight;
+
+                // Prevent dragging up on the hello section
+                if (currentIndex === 0 && deltaY < 0) {
+                  lastTouchY = currentTouchY;
+                  lastTouchTime = currentTime;
+                  return;
+                }
+
+                var proposed = scrollTargetY - (deltaY * sensitivity);
+
+                // Trigger end when dragging past the explore more section
+                if (proposed < minY && deltaY > 0 && !isLocked) {
+                  events.trigger('end');
+                  return;
+                }
+
                 scrollTargetY = Math.max(
                   minY,
-                  Math.min(maxY, scrollTargetY - (deltaY * sensitivity))
+                  Math.min(maxY, proposed)
                 );
 
                 // Lock the camera straight to the finger (no easing lag) so the
@@ -354,11 +375,28 @@ var SCENE = (function () {
               if (scrollTargetY === null) { scrollTargetY = camera.position.y; }
 
               var momentum = touchVelocity * pxToWorld() * 9;
-              var maxY = parameters.sectionHeight;
+              var maxY = 0;
               var minY = (-sections.length * parameters.sectionHeight) - parameters.sectionHeight;
+              var proposed = scrollTargetY - momentum;
+
+              // Trigger end if momentum would carry past the explore more section
+              if (proposed < minY && touchVelocity > 0 && !isLocked) {
+                events.trigger('end');
+                scrollTargetY = null;
+                touchVelocity = 0;
+                return;
+              }
+
+              // Prevent upward momentum on the hello section
+              if (currentIndex === 0 && proposed > 0) {
+                scrollTargetY = 0;
+                touchVelocity = 0;
+                return;
+              }
+
               scrollTargetY = Math.max(
                 minY,
-                Math.min(maxY, scrollTargetY - momentum)
+                Math.min(maxY, proposed)
               );
             } else {
               scrollTargetY = null; // no flick — leave the camera where it is
