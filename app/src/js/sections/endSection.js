@@ -18,7 +18,7 @@ var textOptions = {
 };
 
 var text = new TextPanel(
-  'T  H  A  N  K  S \n F  O  R    W  A  T  C  H  I  N  G',
+  'E  X  P  L  O  R  E \n M  O  R  E',
   textOptions
 );
 endSection.add(text.el);
