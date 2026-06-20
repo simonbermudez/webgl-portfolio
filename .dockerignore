@@ -1,0 +1,11 @@
+.git
+.github
+.claude
+node_modules
+dist
+app/dist
+app/src/vendor
+*.md
+.DS_Store
+email.html
+emailFR.html
