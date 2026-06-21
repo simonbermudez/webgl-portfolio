@@ -7,17 +7,20 @@ import { TweenLite } from 'gsap';
 import MobileUtils from '../utils/mobileUtils.js';
 
 /**
- * Hello video particles.
+ * Hello video particles (GPU-driven).
  *
- * Replaces the old "HELLO" sprite in the hello section with a looping video
- * (Simon saying hi) rasterised into an interactive point cloud. Each frame the
- * video is sampled into a grid of particles whose colour/size track the pixels,
- * brighter pixels pop toward the camera for relief, and the cursor/finger pushes
- * nearby particles aside before they spring home.
+ * Replaces the old "HELLO" sprite with a looping video (Simon saying hi)
+ * rendered as a dense, interactive point cloud. The video is uploaded once per
+ * frame as a THREE.VideoTexture and every particle samples its own pixel inside
+ * the vertex shader — colour, size and a brightness "pop" are all computed on
+ * the GPU, and the pointer push is a single uniform. There is no per-frame
+ * pixel readback or per-particle CPU loop, so the grid can run at high (near
+ * full-resolution) density cheaply.
  *
- * Designed to live inside the scroll-driven scene: it exposes the same
- * in/out/start/stop surface the other section objects use, sizes itself to fit
- * both phone and desktop viewports, and only animates while the section is live.
+ * Lives inside the scroll-driven scene: exposes the same in/out/start/stop
+ * surface as the other section objects, fits phone through desktop viewports,
+ * and derives its visibility from the camera each frame so scrolling away/back
+ * can never leave it stranded.
  *
  * @class HelloVideo
  * @constructor
@@ -30,9 +33,8 @@ function HelloVideo (options) {
 
   var isMobile = MobileUtils.isMobile();
 
-  // Grid resolution doubles as the video sample resolution (count = cols*rows).
-  // The grid aspect matches the 16:9 source so particles aren't stretched.
-  this.rows = isMobile ? 52 : 80;
+  // Particle grid (16:9). High density now that sampling is on the GPU.
+  this.rows = isMobile ? 120 : 208;
   this.cols = Math.round(this.rows * 16 / 9);
   this.count = this.cols * this.rows;
 
@@ -50,23 +52,24 @@ function HelloVideo (options) {
   this.pushXY = this.baseWidth * 0.14;
   this.pushZ = 8;
   this.popZ = 3.2;          // video-brightness relief depth
-  this.ease = isMobile ? 0.2 : 0.16;
 
   this.dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-  this._buildGeometry();
   this._buildVideo(parameters.src);
+  this._buildGeometry();
 
   this.el = new THREE.Points(this.geometry, this.material);
   this.el.frustumCulled = false;
 
-  // Reusable scratch objects for the per-frame pointer raycast.
+  // Pointer raycast scratch + eased pointer state.
   this._raycaster = new THREE.Raycaster();
   this._plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
   this._ndc = new THREE.Vector2();
   this._hit = new THREE.Vector3();
   this._pointerActive = false;
   this._pointerLocal = new THREE.Vector3();
+  this._pointerLerp = new THREE.Vector3();
+  this._strength = 0;
 
   this._bindPointer();
   this.fit();
@@ -79,18 +82,41 @@ HelloVideo.defaultOptions = {
   src: './app/public/video/hi.mp4'
 };
 
+// Each particle samples its own pixel from the video texture and is displaced by
+// the pointer — all on the GPU.
 HelloVideo.vertexShader = [
-  'attribute float aBrightness;',
-  'attribute vec3 aOffset;',
+  'uniform sampler2D uVideo;',
   'uniform float uReveal;',
-  'uniform float uPointScale;',
+  'uniform float uPointSize;',
+  'uniform vec3 uPointer;',
+  'uniform float uPointerStrength;',
+  'uniform float uRadius;',
+  'uniform float uPushXY;',
+  'uniform float uPushZ;',
+  'uniform float uPopZ;',
+  'attribute vec2 aUv;',
+  'attribute vec3 aOffset;',
   'varying vec3 vColor;',
   'void main () {',
-  '  vColor = color;',
-  '  vec3 p = position + aOffset * (1.0 - uReveal);',
-  '  vec4 mv = modelViewMatrix * vec4(p, 1.0);',
-  '  gl_PointSize = (1.0 + aBrightness * 4.0) * uPointScale * uReveal;',
-  '  gl_Position = projectionMatrix * mv;',
+  '  vec3 col = texture2D(uVideo, aUv).rgb;',
+  '  vColor = col;',
+  '  float lum = dot(col, vec3(0.299, 0.587, 0.114));',
+  '  vec3 p = position;',
+  '  if (uPointerStrength > 0.001) {',
+  '    vec2 d = p.xy - uPointer.xy;',
+  '    float dist = length(d);',
+  '    if (dist < uRadius) {',
+  '      float f = 1.0 - dist / uRadius;',
+  '      f = f * f * uPointerStrength;',
+  '      vec2 dir = dist > 0.0001 ? d / dist : vec2(1.0, 0.0);',
+  '      p.xy += dir * f * uPushXY;',
+  '      p.z += f * uPushZ;',
+  '    }',
+  '  }',
+  '  p.z += lum * uPopZ;',
+  '  p += aOffset * (1.0 - uReveal);',
+  '  gl_PointSize = uPointSize * (0.5 + lum) * uReveal;',
+  '  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);',
   '}'
 ].join('\n');
 
@@ -107,92 +133,11 @@ HelloVideo.fragmentShader = [
 ].join('\n');
 
 /**
- * Build the point cloud geometry + material.
- *
- * @method _buildGeometry
- */
-HelloVideo.prototype._buildGeometry = function () {
-  var cols = this.cols;
-  var rows = this.rows;
-  var count = this.count;
-  var hw = this.baseWidth / 2;
-  var hh = this.baseHeight / 2;
-
-  this.home = new Float32Array(count * 3);
-  var positions = new Float32Array(count * 3);
-  var colors = new Float32Array(count * 3);
-  var brightness = new Float32Array(count);
-  var offsets = new Float32Array(count * 3);
-  this.popTarget = new Float32Array(count);
-
-  var i = 0;
-  for (var y = 0; y < rows; y++) {
-    for (var x = 0; x < cols; x++) {
-      // Mirror X so the (selfie) video reads like a mirror.
-      var nx = 1 - (x + 0.5) / cols;       // [0,1] mirrored
-      var ny = (y + 0.5) / rows;           // [0,1] top->bottom
-      var wx = (nx * 2 - 1) * hw;
-      var wy = (1 - ny * 2) * hh;
-
-      this.home[i * 3] = wx;
-      this.home[i * 3 + 1] = wy;
-      this.home[i * 3 + 2] = 0;
-
-      positions[i * 3] = wx;
-      positions[i * 3 + 1] = wy;
-      positions[i * 3 + 2] = 0;
-
-      // Deterministic scatter for the reveal (no Math.random in this codebase's
-      // build-time path; a hash keeps it stable across reloads).
-      var ang = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-      ang = ang - Math.floor(ang);
-      var ang2 = Math.sin(x * 39.346 + y * 11.135) * 24634.633;
-      ang2 = ang2 - Math.floor(ang2);
-      var theta = ang * Math.PI * 2;
-      var spread = 6 + ang2 * 10;
-      offsets[i * 3] = Math.cos(theta) * spread;
-      offsets[i * 3 + 1] = Math.sin(theta) * spread;
-      offsets[i * 3 + 2] = (ang2 - 0.5) * 8;
-
-      i++;
-    }
-  }
-
-  var geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  geometry.setAttribute('aBrightness', new THREE.BufferAttribute(brightness, 1));
-  geometry.setAttribute('aOffset', new THREE.BufferAttribute(offsets, 3));
-  this.geometry = geometry;
-
-  this.uniforms = {
-    uReveal: { value: 0 },
-    uOpacity: { value: 0 },
-    uPointScale: { value: this.dpr * 2 }
-  };
-
-  this.material = new THREE.ShaderMaterial({
-    uniforms: this.uniforms,
-    vertexShader: HelloVideo.vertexShader,
-    fragmentShader: HelloVideo.fragmentShader,
-    vertexColors: true,
-    transparent: true,
-    depthTest: false,
-    depthWrite: false
-  });
-};
-
-/**
- * Build the looping, muted, inline video + its offscreen sampling canvas.
+ * Build the looping, muted, inline video + its GPU VideoTexture.
  *
  * @method _buildVideo
  */
 HelloVideo.prototype._buildVideo = function (src) {
-  var canvas = document.createElement('canvas');
-  canvas.width = this.cols;
-  canvas.height = this.rows;
-  this._sampleCtx = canvas.getContext('2d', { willReadFrequently: true });
-
   var video = document.createElement('video');
   video.src = src;
   video.muted = true;
@@ -205,7 +150,92 @@ HelloVideo.prototype._buildVideo = function (src) {
   video.preload = 'auto';
   video.crossOrigin = 'anonymous';
   this.video = video;
+
+  var texture = new THREE.VideoTexture(video);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  // Video frames arrive top-row-first; sample them un-flipped so the cloud is
+  // the right way up.
+  texture.flipY = false;
+  this.texture = texture;
+
   video.load();
+};
+
+/**
+ * Build the point cloud geometry + shader material. Positions, sample UVs and
+ * reveal offsets are uploaded once; everything else is per-frame uniforms.
+ *
+ * @method _buildGeometry
+ */
+HelloVideo.prototype._buildGeometry = function () {
+  var cols = this.cols;
+  var rows = this.rows;
+  var count = this.count;
+  var hw = this.baseWidth / 2;
+  var hh = this.baseHeight / 2;
+
+  var positions = new Float32Array(count * 3);
+  var uvs = new Float32Array(count * 2);
+  var offsets = new Float32Array(count * 3);
+
+  var i = 0;
+  for (var y = 0; y < rows; y++) {
+    for (var x = 0; x < cols; x++) {
+      var u = (x + 0.5) / cols;
+      var v = (y + 0.5) / rows;
+
+      positions[i * 3] = (u * 2 - 1) * hw;       // left -> right
+      positions[i * 3 + 1] = (1 - v * 2) * hh;   // top -> bottom
+      positions[i * 3 + 2] = 0;
+
+      // Mirror X so the selfie video reads like a mirror.
+      uvs[i * 2] = 1 - u;
+      uvs[i * 2 + 1] = v;
+
+      // Deterministic scatter for the reveal (no Math.random in the build path).
+      var h1 = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+      h1 = h1 - Math.floor(h1);
+      var h2 = Math.sin(x * 39.346 + y * 11.135) * 24634.633;
+      h2 = h2 - Math.floor(h2);
+      var theta = h1 * Math.PI * 2;
+      var spread = 6 + h2 * 10;
+      offsets[i * 3] = Math.cos(theta) * spread;
+      offsets[i * 3 + 1] = Math.sin(theta) * spread;
+      offsets[i * 3 + 2] = (h2 - 0.5) * 8;
+
+      i++;
+    }
+  }
+
+  var geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('aUv', new THREE.BufferAttribute(uvs, 2));
+  geometry.setAttribute('aOffset', new THREE.BufferAttribute(offsets, 3));
+  this.geometry = geometry;
+
+  this.uniforms = {
+    uVideo: { value: this.texture },
+    uReveal: { value: 0 },
+    uOpacity: { value: 0 },
+    uPointSize: { value: 2 },
+    uPointer: { value: new THREE.Vector3() },
+    uPointerStrength: { value: 0 },
+    uRadius: { value: this.radius },
+    uPushXY: { value: this.pushXY },
+    uPushZ: { value: this.pushZ },
+    uPopZ: { value: this.popZ }
+  };
+
+  this.material = new THREE.ShaderMaterial({
+    uniforms: this.uniforms,
+    vertexShader: HelloVideo.vertexShader,
+    fragmentShader: HelloVideo.fragmentShader,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false
+  });
 };
 
 /**
@@ -223,17 +253,13 @@ HelloVideo.prototype._bindPointer = function () {
     _this._pointerActive = true;
   }
 
-  this._onPointerMove = function (e) {
-    set(e.clientX, e.clientY);
-  };
+  this._onPointerMove = function (e) { set(e.clientX, e.clientY); };
   this._onTouchMove = function (e) {
     if (e.touches && e.touches.length) {
       set(e.touches[0].clientX, e.touches[0].clientY);
     }
   };
-  this._onPointerLeave = function () {
-    _this._pointerActive = false;
-  };
+  this._onPointerLeave = function () { _this._pointerActive = false; };
 
   window.addEventListener('pointermove', this._onPointerMove, { passive: true });
   window.addEventListener('touchmove', this._onTouchMove, { passive: true });
@@ -242,8 +268,7 @@ HelloVideo.prototype._bindPointer = function () {
 };
 
 /**
- * Give the object the live scene camera so pointer raycasting is exact across
- * the camera's drift / fov zoom. Without it, interactivity simply stays off.
+ * Give the object the live scene camera so pointer raycasting is exact.
  *
  * @method setCamera
  * @param {THREE.Camera} camera
@@ -254,16 +279,14 @@ HelloVideo.prototype.setCamera = function (camera) {
 };
 
 /**
- * Scale the cloud to fit the current viewport (phone portrait through wide
- * desktop) and size the points to match its on-screen footprint.
+ * Scale the cloud to fit the current viewport and size the points to the grid
+ * spacing so they read as a near-continuous image at any size.
  *
  * @method fit
  */
 HelloVideo.prototype.fit = function () {
-  // Size against the camera's SETTLED fov, not its live value: the scene zooms
-  // fov 200 -> 60 on entry, so reading camera.fov here (often 20 at setup) would
-  // size the plane for the wrong projection. The pointer raycast still uses the
-  // live camera, so interactivity stays exact.
+  // Size against the camera's SETTLED fov (the scene zooms fov 200 -> 60 on
+  // entry); the pointer raycast still uses the live camera, so it stays exact.
   var fov = 60;
   var dist = (this.camera && this.camera.position) ? this.camera.position.z : 40;
   var aspect = window.innerWidth / Math.max(1, window.innerHeight);
@@ -271,7 +294,6 @@ HelloVideo.prototype.fit = function () {
   var visibleH = 2 * dist * Math.tan((fov * Math.PI) / 360);
   var visibleW = visibleH * aspect;
 
-  // Fit within 92% of width and 64% of height, whichever is tighter.
   var scale = Math.min(
     (visibleW * 0.92) / this.baseWidth,
     (visibleH * 0.64) / this.baseHeight
@@ -283,165 +305,15 @@ HelloVideo.prototype.fit = function () {
   this._scale = scale;
   this.el.scale.set(scale, scale, scale);
 
-  // Points are sized in screen pixels, so scale them with the cloud's apparent
-  // size (and device pixel ratio) to keep density consistent everywhere.
-  this.uniforms.uPointScale.value = Math.max(1.2, scale * this.dpr * 1.6);
+  // Point diameter ~= on-screen spacing between adjacent particles, so the grid
+  // fills in without big gaps or heavy overdraw.
+  var planeScreenPx = (this.baseHeight * scale / visibleH) * window.innerHeight;
+  var spacingPx = planeScreenPx / this.rows;
+  this.uniforms.uPointSize.value = Math.max(1.5, spacingPx * 1.7);
 };
 
 /**
- * Sample the current video frame into the colour/size/relief attributes.
- *
- * @method _sampleVideo
- */
-HelloVideo.prototype._sampleVideo = function () {
-  var ctx = this._sampleCtx;
-  var cols = this.cols;
-  var rows = this.rows;
-  var video = this.video;
-
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, cols, rows);
-
-  if (video.readyState >= 2 && video.videoWidth > 0) {
-    // "cover" crop the 16:9 source into the 16:9 grid (no distortion).
-    var scale = Math.max(cols / video.videoWidth, rows / video.videoHeight);
-    var dw = video.videoWidth * scale;
-    var dh = video.videoHeight * scale;
-    ctx.drawImage(video, (cols - dw) / 2, (rows - dh) / 2, dw, dh);
-  }
-
-  var pixels = ctx.getImageData(0, 0, cols, rows).data;
-  var colorArr = this.geometry.attributes.color.array;
-  var brightArr = this.geometry.attributes.aBrightness.array;
-  var popTarget = this.popTarget;
-
-  for (var p = 0; p < this.count; p++) {
-    var r = pixels[p * 4] / 255;
-    var g = pixels[p * 4 + 1] / 255;
-    var b = pixels[p * 4 + 2] / 255;
-    var lum = 0.299 * r + 0.587 * g + 0.114 * b;
-
-    colorArr[p * 3] = r;
-    colorArr[p * 3 + 1] = g;
-    colorArr[p * 3 + 2] = b;
-    brightArr[p] = lum;
-    popTarget[p] = lum * this.popZ;
-  }
-
-  this.geometry.attributes.color.needsUpdate = true;
-  this.geometry.attributes.aBrightness.needsUpdate = true;
-};
-
-/**
- * Project the pointer onto the particle plane (object-local space).
- *
- * @method _updatePointer
- * @return {Boolean} whether a usable pointer position is available
- */
-HelloVideo.prototype._updatePointer = function () {
-  if (!this._pointerActive || !this.camera) {
-    return false;
-  }
-
-  this._raycaster.setFromCamera(this._ndc, this.camera);
-  var hit = this._raycaster.ray.intersectPlane(this._plane, this._hit);
-  if (!hit) {
-    return false;
-  }
-
-  this.el.updateWorldMatrix(true, false);
-  this._pointerLocal.copy(hit);
-  this.el.worldToLocal(this._pointerLocal);
-  return true;
-};
-
-/**
- * Per-frame update: sample video, push particles from the pointer, spring home.
- *
- * @method _update
- */
-HelloVideo.prototype._update = function () {
-  if (!this.running) {
-    return;
-  }
-  this._rafId = window.requestAnimationFrame(this._loop);
-
-  // Visibility is driven by the camera's distance to this section, NOT by the
-  // section's in/out edge events — the free-scroll navigation can fire a
-  // spurious out() after you return, which used to leave the video running but
-  // stuck at opacity 0 ("cuts off"). Deriving it from camera position each frame
-  // makes the fade self-correcting in both directions.
-  var vis = this._visibility();
-  var uo = this.uniforms.uOpacity;
-  uo.value += (vis - uo.value) * 0.1;
-
-  // Pause decoding while scrolled away; resume as the section comes back.
-  if (vis < 0.02) {
-    if (!this.video.paused) {
-      try { this.video.pause(); } catch (e) { /* noop */ }
-    }
-  } else if (this.video.paused) {
-    var resume = this.video.play();
-    if (resume && resume.catch) {
-      resume.catch(function () {});
-    }
-  }
-
-  // Nothing visible: skip the expensive sampling + interaction this frame.
-  if (uo.value < 0.02) {
-    return;
-  }
-
-  this._sampleVideo();
-
-  var hasPointer = this._updatePointer();
-  var plx = this._pointerLocal.x;
-  var ply = this._pointerLocal.y;
-
-  var pos = this.geometry.attributes.position.array;
-  var home = this.home;
-  var popTarget = this.popTarget;
-  var R = this.radius;
-  var R2 = R * R;
-  var pushXY = this.pushXY;
-  var pushZ = this.pushZ;
-  var ease = this.ease;
-
-  for (var p = 0; p < this.count; p++) {
-    var ix = p * 3;
-    var hx = home[ix];
-    var hy = home[ix + 1];
-
-    var desX = hx;
-    var desY = hy;
-    var desZ = popTarget[p];
-
-    if (hasPointer) {
-      var dx = hx - plx;
-      var dy = hy - ply;
-      var d2 = dx * dx + dy * dy;
-      if (d2 < R2) {
-        var d = Math.sqrt(d2) || 0.0001;
-        var f = 1 - d / R;
-        f = f * f;                     // softer falloff
-        desX += (dx / d) * f * pushXY;
-        desY += (dy / d) * f * pushXY;
-        desZ += f * pushZ;
-      }
-    }
-
-    pos[ix] += (desX - pos[ix]) * ease;
-    pos[ix + 1] += (desY - pos[ix + 1]) * ease;
-    pos[ix + 2] += (desZ - pos[ix + 2]) * ease;
-  }
-
-  this.geometry.attributes.position.needsUpdate = true;
-};
-
-/**
- * Fade factor (0..1) for how centred this section is on the camera. 1 when the
- * hello section fills the view, easing to 0 by the time the neighbouring section
- * is centred.
+ * Fade factor (0..1) for how centred this section is on the camera.
  *
  * @method _visibility
  * @return {Number}
@@ -452,14 +324,77 @@ HelloVideo.prototype._visibility = function () {
   }
   var sectionY = this.el.parent ? this.el.parent.position.y : 0;
   var d = Math.abs(this.camera.position.y - sectionY);
-  // Fully visible within 15 world units, gone by 40 (section spacing is 50).
-  var v = 1 - (d - 15) / 25;
+  var v = 1 - (d - 15) / 25; // visible within 15 units, gone by 40 (spacing 50)
   return Math.max(0, Math.min(1, v));
 };
 
 /**
- * Reveal. Visibility itself is camera-driven (see _update); in() just guarantees
- * the loop is live and plays the one-time scatter-in the first time we appear.
+ * Raycast the pointer onto the particle plane (object-local space).
+ *
+ * @method _raycastPointer
+ * @return {Boolean} whether a usable pointer position is available
+ */
+HelloVideo.prototype._raycastPointer = function () {
+  this._raycaster.setFromCamera(this._ndc, this.camera);
+  if (!this._raycaster.ray.intersectPlane(this._plane, this._hit)) {
+    return false;
+  }
+  this.el.updateWorldMatrix(true, false);
+  this._pointerLocal.copy(this._hit);
+  this.el.worldToLocal(this._pointerLocal);
+  return true;
+};
+
+/**
+ * Per-frame update: camera-driven fade, video upload, eased pointer uniform.
+ * All particle work happens on the GPU, so this stays O(1).
+ *
+ * @method _update
+ */
+HelloVideo.prototype._update = function () {
+  if (!this.running) {
+    return;
+  }
+  this._rafId = window.requestAnimationFrame(this._loop);
+
+  // Camera-driven visibility (self-correcting; immune to stray scroll events).
+  var vis = this._visibility();
+  var uo = this.uniforms.uOpacity;
+  uo.value += (vis - uo.value) * 0.1;
+
+  if (vis < 0.02) {
+    if (!this.video.paused) {
+      try { this.video.pause(); } catch (e) { /* noop */ }
+    }
+  } else {
+    if (this.video.paused) {
+      var resume = this.video.play();
+      if (resume && resume.catch) {
+        resume.catch(function () {});
+      }
+    }
+    // Push the current video frame to the GPU.
+    if (this.video.readyState >= 2) {
+      this.texture.needsUpdate = true;
+    }
+  }
+
+  // Eased pointer: the displacement field smoothly follows the cursor and
+  // deflates when it leaves, without per-particle CPU state.
+  var targetStrength = (this._pointerActive && this.camera) ? 1 : 0;
+  this._strength += (targetStrength - this._strength) * 0.12;
+
+  if (targetStrength > 0 && this._raycastPointer()) {
+    this._pointerLerp.lerp(this._pointerLocal, 0.25);
+  }
+
+  this.uniforms.uPointer.value.copy(this._pointerLerp);
+  this.uniforms.uPointerStrength.value = this._strength;
+};
+
+/**
+ * Reveal. Visibility itself is camera-driven; in() just ensures the loop is live
+ * and plays the one-time scatter-in the first time we appear.
  *
  * @method in
  */
@@ -476,7 +411,7 @@ HelloVideo.prototype.in = function () {
 HelloVideo.prototype.out = function () {};
 
 /**
- * Start the sampling/interaction loop and video playback.
+ * Start the loop + video playback.
  *
  * @method start
  */
@@ -502,9 +437,8 @@ HelloVideo.prototype.start = function () {
 };
 
 /**
- * Pause sampling + playback. Visibility is restored automatically by start()
- * (called whenever the section becomes current again), so this can't strand the
- * video invisible.
+ * Pause the loop + playback. Visibility is restored automatically by start()
+ * (called whenever the section becomes current again).
  *
  * @method stop
  */
