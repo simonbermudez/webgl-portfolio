@@ -95,13 +95,21 @@ HelloVideo.vertexShader = [
   'uniform float uPushXY;',
   'uniform float uPushZ;',
   'uniform float uPopZ;',
+  'uniform vec3 uTintLow;',
+  'uniform vec3 uTintHigh;',
   'attribute vec2 aUv;',
   'attribute vec3 aOffset;',
   'varying vec3 vColor;',
+  'varying float vShade;',
   'void main () {',
   '  vec3 col = texture2D(uVideo, aUv).rgb;',
-  '  vColor = col;',
   '  float lum = dot(col, vec3(0.299, 0.587, 0.114));',
+  // Stylize to match the rest of the scene: discard the webcam\'s real-world
+  // colour, keep luminance, and push the mid-darks toward black so the desk and
+  // background dissolve. What survives is an airy, cool-white point cloud of the
+  // lit subject - the same monochrome-on-#0a0a0a language as the other sections.
+  '  vShade = smoothstep(0.16, 0.92, lum);',
+  '  vColor = mix(uTintLow, uTintHigh, vShade);',
   '  vec3 p = position;',
   '  if (uPointerStrength > 0.001) {',
   '    vec2 d = p.xy - uPointer.xy;',
@@ -116,7 +124,7 @@ HelloVideo.vertexShader = [
   '  }',
   '  p.z += lum * uPopZ;',
   '  p += aOffset * (1.0 - uReveal);',
-  '  gl_PointSize = uPointSize * (0.5 + lum) * uReveal;',
+  '  gl_PointSize = uPointSize * (0.35 + 0.9 * vShade) * uReveal;',
   '  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);',
   '}'
 ].join('\n');
@@ -124,12 +132,15 @@ HelloVideo.vertexShader = [
 HelloVideo.fragmentShader = [
   'uniform float uOpacity;',
   'varying vec3 vColor;',
+  'varying float vShade;',
   'void main () {',
   '  vec2 c = gl_PointCoord - vec2(0.5);',
   '  float d = dot(c, c);',
   '  if (d > 0.25) discard;',
   '  float a = smoothstep(0.25, 0.04, d);',
-  '  gl_FragColor = vec4(vColor, a * uOpacity);',
+  // Fold the luminance shade into alpha so the darkest points (desk, wall, the
+  // video\'s black bars) fade out entirely, leaving the airy white subject.
+  '  gl_FragColor = vec4(vColor, a * uOpacity * (0.25 + 0.75 * vShade));',
   '}'
 ].join('\n');
 
@@ -220,6 +231,9 @@ HelloVideo.prototype._buildGeometry = function () {
     uVideo: { value: this.texture },
     uReveal: { value: 0 },
     uOpacity: { value: 0 },
+    // Monochrome palette matching the scene: near-background shadow -> cool white.
+    uTintLow: { value: new THREE.Color(0x0c0e12) },
+    uTintHigh: { value: new THREE.Color(0xc6cee0) },
     uPointSize: { value: 2 },
     uPointer: { value: new THREE.Vector3() },
     uPointerStrength: { value: 0 },
