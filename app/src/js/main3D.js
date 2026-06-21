@@ -119,6 +119,11 @@ jQuery(function () {
 
   SCENE.config({ quality: 1 });
   SCENE.setViewport($viewport);
+
+  // Hand the live camera to the interactive hello video so it can raycast the
+  // pointer onto the particle plane (setViewport creates the camera).
+  helloSection.setCamera(SCENE.getCamera());
+
   SCENE.addSections([
     helloSection,
     beamsSection,

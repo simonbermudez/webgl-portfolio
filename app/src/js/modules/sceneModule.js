@@ -640,6 +640,17 @@ var SCENE = (function () {
       },
 
       /**
+       * Return the live scene camera (for objects that need to raycast the
+       * pointer, e.g. the interactive hello video particles).
+       *
+       * @method getCamera
+       * @return {THREE.Camera}
+       */
+      getCamera: function () {
+        return camera;
+      },
+
+      /**
        * Set config
        *
        * @method config

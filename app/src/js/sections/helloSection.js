@@ -2,13 +2,19 @@
 
 import Section from '../classes/SectionClass.js';
 
-import Title from '../objects3D/HelloTitleObject3D.js';
+import HelloVideo from '../objects3D/HelloVideoObject3D.js';
 import Smoke from '../objects3D/SmokeObject3D.js';
 
 var helloSection = new Section('hello');
 
-var title = new Title();
+// Interactive looping video particle system (replaces the old HELLO sprite).
+var title = new HelloVideo();
 helloSection.add(title.el);
+
+// Lets main3D hand the live camera through so pointer raycasting is exact.
+helloSection.setCamera = function (camera) {
+  title.setCamera(camera);
+};
 
 var smoke = new Smoke({  
   frontColor: '#4c4c4c',
