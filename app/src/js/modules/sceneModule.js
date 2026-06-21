@@ -144,13 +144,12 @@ var SCENE = (function () {
           // Apply scroll movement with improved sensitivity
           var scrollSpeed = 4; // Increased sensitivity for faster scrolling
           var targetCameraY = camera.position.y + (delta * scrollSpeed);
-          
-          // Prevent scrolling up on the first (hello) section
-          if (currentIndex === 0 && delta > 0) {
-            return false;
-          }
 
-          // Check if user is trying to scroll past the last section (explore more section)
+          // The top of the hero is the hard ceiling. We clamp to maxY below
+          // (never above y = 0), so there is no separate "block scroll up"
+          // guard here: keying it on currentIndex === 0 used to freeze upward
+          // scroll across the whole first half of the hello section, stranding
+          // the camera below the top once you'd scrolled partway down and back.
           var maxY = 0;
           var minY = (-(sections.length - 1) * parameters.sectionHeight) - (parameters.sectionHeight * 0.5);
 
@@ -330,13 +329,10 @@ var SCENE = (function () {
                 var maxY = 0;
                 var minY = (-(sections.length - 1) * parameters.sectionHeight) - (parameters.sectionHeight * 0.5);
 
-                // Prevent dragging up on the hello section
-                if (currentIndex === 0 && deltaY < 0) {
-                  lastTouchY = currentTouchY;
-                  lastTouchTime = currentTime;
-                  return;
-                }
-
+                // The clamp to maxY below is the top ceiling. We don't add a
+                // currentIndex === 0 guard here: it froze the drag-up for the
+                // whole first half of the hello section, so a finger drag down
+                // and back up couldn't return to the top.
                 var proposed = scrollTargetY - (deltaY * sensitivity);
 
                 // Trigger end when dragging past the explore more section
